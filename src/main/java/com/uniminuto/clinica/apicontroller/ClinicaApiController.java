@@ -5,7 +5,7 @@ import com.uniminuto.clinica.models.MiRespuestaRS;
 import com.uniminuto.clinica.service.ClinicaService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
-import org.apache.coyote.BadRequestException;
+import com.uniminuto.clinica.exception.BadRequestException;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController

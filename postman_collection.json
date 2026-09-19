@@ -1,0 +1,386 @@
+{
+  "info": {
+    "name": "Clinica Veterinaria - Parcial",
+    "description": "Coleccion de pruebas para todos los servicios REST de la clinica veterinaria. Usa la variable {{baseUrl}} para apuntar al backend.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:8080/clinica/v1",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "Cliente",
+      "item": [
+        {
+          "name": "Listar clientes",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/cliente/listar-todos",
+              "host": ["{{baseUrl}}"],
+              "path": ["cliente", "listar-todos"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Clinica (diagnostico)",
+      "item": [
+        {
+          "name": "Test",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/clinica/test",
+              "host": ["{{baseUrl}}"],
+              "path": ["clinica", "test"]
+            }
+          }
+        },
+        {
+          "name": "Test2",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/clinica/test2",
+              "host": ["{{baseUrl}}"],
+              "path": ["clinica", "test2"]
+            }
+          }
+        },
+        {
+          "name": "Test3",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/clinica/test3",
+              "host": ["{{baseUrl}}"],
+              "path": ["clinica", "test3"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Mascota",
+      "item": [
+        {
+          "name": "Listar mascotas",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/mascota/listar-mascotas",
+              "host": ["{{baseUrl}}"],
+              "path": ["mascota", "listar-mascotas"]
+            }
+          }
+        },
+        {
+          "name": "Listar mascotas ordenado",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/mascota/listar-mascotas-ordenado?ascendente=true",
+              "host": ["{{baseUrl}}"],
+              "path": ["mascota", "listar-mascotas-ordenado"],
+              "query": [
+                { "key": "ascendente", "value": "true" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Buscar por raza",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/mascota/buscar-by-raza?razaId=1",
+              "host": ["{{baseUrl}}"],
+              "path": ["mascota", "buscar-by-raza"],
+              "query": [
+                { "key": "razaId", "value": "1" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Buscar por cliente",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/mascota/buscar-by-cliente?clienteId=1",
+              "host": ["{{baseUrl}}"],
+              "path": ["mascota", "buscar-by-cliente"],
+              "query": [
+                { "key": "clienteId", "value": "1" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Guardar mascota",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nombreMascota\": \"Firulais\",\n  \"edad\": 2,\n  \"razaId\": 1,\n  \"clienteId\": 1\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/mascota/guardar",
+              "host": ["{{baseUrl}}"],
+              "path": ["mascota", "guardar"]
+            }
+          }
+        },
+        {
+          "name": "Actualizar mascota",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"mascotaId\": 1,\n  \"nombreMascota\": \"Firulais\",\n  \"edad\": 3,\n  \"razaId\": 1,\n  \"clienteId\": 1\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/mascota/actualizar",
+              "host": ["{{baseUrl}}"],
+              "path": ["mascota", "actualizar"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Cita",
+      "item": [
+        {
+          "name": "Listar citas por fecha",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/cita/listar-por-fecha?fechaInicial=2024-01-01T00:00:00&fechaFinal=2026-12-31T00:00:00",
+              "host": ["{{baseUrl}}"],
+              "path": ["cita", "listar-por-fecha"],
+              "query": [
+                { "key": "fechaInicial", "value": "2024-01-01T00:00:00" },
+                { "key": "fechaFinal", "value": "2026-12-31T00:00:00" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Guardar cita",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"clienteId\": 1,\n  \"mascotaId\": 1,\n  \"medicoId\": 1,\n  \"fechaHora\": \"2026-09-20T10:00:00\",\n  \"estado\": \"programada\",\n  \"motivo\": \"Chequeo general\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/cita/guardar",
+              "host": ["{{baseUrl}}"],
+              "path": ["cita", "guardar"]
+            }
+          }
+        },
+        {
+          "name": "Actualizar cita",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"citaId\": 1,\n  \"clienteId\": 1,\n  \"mascotaId\": 1,\n  \"medicoId\": 1,\n  \"fechaHora\": \"2026-10-01T09:00:00\",\n  \"estado\": \"atendida\",\n  \"motivo\": \"Control\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/cita/actualizar",
+              "host": ["{{baseUrl}}"],
+              "path": ["cita", "actualizar"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Formula Medica",
+      "item": [
+        {
+          "name": "Listar formulas medicas",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/formula-medica/listar",
+              "host": ["{{baseUrl}}"],
+              "path": ["formula-medica", "listar"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Historia Medica",
+      "item": [
+        {
+          "name": "Listar historias (sin filtro)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/historia-medica/listar",
+              "host": ["{{baseUrl}}"],
+              "path": ["historia-medica", "listar"]
+            }
+          }
+        },
+        {
+          "name": "Listar historias por fecha",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/historia-medica/listar?fechaInicial=2024-01-01T00:00:00&fechaFinal=2026-12-31T00:00:00",
+              "host": ["{{baseUrl}}"],
+              "path": ["historia-medica", "listar"],
+              "query": [
+                { "key": "fechaInicial", "value": "2024-01-01T00:00:00" },
+                { "key": "fechaFinal", "value": "2026-12-31T00:00:00" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Guardar historia medica",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"mascotaId\": 1\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/historia-medica/guardar",
+              "host": ["{{baseUrl}}"],
+              "path": ["historia-medica", "guardar"]
+            }
+          }
+        },
+        {
+          "name": "Actualizar historia medica",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"historiaId\": 1,\n  \"mascotaId\": 2\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/historia-medica/actualizar",
+              "host": ["{{baseUrl}}"],
+              "path": ["historia-medica", "actualizar"]
+            }
+          }
+        },
+        {
+          "name": "Eliminar historia medica",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/historia-medica/eliminar?historiaId=1",
+              "host": ["{{baseUrl}}"],
+              "path": ["historia-medica", "eliminar"],
+              "query": [
+                { "key": "historiaId", "value": "1" }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Anotacion Historia",
+      "item": [
+        {
+          "name": "Listar anotaciones",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/anotacion-historia/listar?historiaId=1",
+              "host": ["{{baseUrl}}"],
+              "path": ["anotacion-historia", "listar"],
+              "query": [
+                { "key": "historiaId", "value": "1" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Guardar anotacion",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"historiaId\": 1,\n  \"medicoId\": 1,\n  \"descripcion\": \"Paciente estable, se recomienda control en 15 dias\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/anotacion-historia/guardar",
+              "host": ["{{baseUrl}}"],
+              "path": ["anotacion-historia", "guardar"]
+            }
+          }
+        },
+        {
+          "name": "Actualizar anotacion",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"anotacionId\": 1,\n  \"historiaId\": 1,\n  \"medicoId\": 2,\n  \"descripcion\": \"Actualizado: paciente de alta\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/anotacion-historia/actualizar",
+              "host": ["{{baseUrl}}"],
+              "path": ["anotacion-historia", "actualizar"]
+            }
+          }
+        }
+      ]
+    }
+  ]
+}

@@ -5,7 +5,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.apache.coyote.BadRequestException;
+import com.uniminuto.clinica.exception.BadRequestException;
 
 @CrossOrigin(origins = "*", allowedHeaders = "*")
 @RequestMapping("/clinica")
@@ -18,8 +18,7 @@ public interface ClinicaApi {
      * @throws BadRequestException excepcion.
      */
     @GetMapping(value = "/test",
-            produces = {"application/text"},
-            consumes = {"application/json"})
+            produces = {"application/text"})
     ResponseEntity<String> testService()
             throws BadRequestException;
 
@@ -30,8 +29,7 @@ public interface ClinicaApi {
      * @throws BadRequestException excepcion.
      */
     @GetMapping(value = "/test2",
-            produces = {"application/text"},
-            consumes = {"application/json"})
+            produces = {"application/text"})
     ResponseEntity<String> testService2()
             throws BadRequestException;
 
@@ -42,8 +40,7 @@ public interface ClinicaApi {
      * @throws BadRequestException excepcion.
      */
     @GetMapping(value = "/test3",
-            produces = {"application/json"},
-            consumes = {"application/json"})
+            produces = {"application/json"})
     ResponseEntity<MiRespuestaRS> testService3()
             throws BadRequestException;
 
