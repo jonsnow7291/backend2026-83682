@@ -135,7 +135,9 @@ CREATE TABLE IF NOT EXISTS formula_medica (
 -- ==========================================================
 
 INSERT INTO cliente (cliente_id, usuario_id, tipo_documento, numero_documento, nombres, apellidos, fecha_nacimiento, genero, telefono, direccion, activo)
-VALUES (1, 1, 'CC', '1000000001', 'Juan', 'Pérez', '1990-05-15', 'M', '3001234567', 'Calle 123 #45-67', TRUE)
+VALUES 
+(1, 1, 'CC', '1000000001', 'Juan', 'Pérez', '1990-05-15', 'M', '3001234567', 'Calle 123 #45-67', TRUE),
+(2, 2, 'CC', '1000000002', 'Ana', 'Gómez', '1995-08-20', 'F', '3159988776', 'Carrera 7 #45-12', TRUE)
 ON DUPLICATE KEY UPDATE numero_documento=numero_documento;
 
 INSERT INTO raza (raza_id, nombre, especie, fecha_creacion)
@@ -143,13 +145,17 @@ VALUES (1, 'Golden Retriever', 'Canino', NOW())
 ON DUPLICATE KEY UPDATE nombre=nombre;
 
 INSERT INTO mascota (mascota_id, nombre_mascota, edad, fecha_registro, raza_id, cliente_id)
-VALUES (1, 'Firulais', 2, NOW(), 1, 1)
+VALUES 
+(1, 'Firulais', 2, NOW(), 1, 1),
+(2, 'Luna', 1, NOW(), 1, 1),
+(3, 'Michi', 3, NOW(), 1, 2)
 ON DUPLICATE KEY UPDATE nombre_mascota=nombre_mascota;
 
 INSERT INTO medico (id, tipo_documento, numero_documento, nombres, apellidos, telefono, registro_profesional, especializacion_id)
 VALUES 
 (1, 'CC', '900000001', 'Dra. María', 'González', '3109876543', 'VET-001', 1),
-(2, 'CC', '900000002', 'Dr. Carlos', 'Rodríguez', '3118765432', 'VET-002', 2)
+(2, 'CC', '900000002', 'Dr. Carlos', 'Rodríguez', '3118765432', 'VET-002', 2),
+(3, 'CC', '900000003', 'Dra. Laura', 'Martínez', '3201122334', 'VET-003', 1)
 ON DUPLICATE KEY UPDATE numero_documento=numero_documento;
 
 INSERT INTO medicamento (id, nombre, descripcion, presentacion, fecha_compra, fecha_vence, fecha_creacion_registro)
