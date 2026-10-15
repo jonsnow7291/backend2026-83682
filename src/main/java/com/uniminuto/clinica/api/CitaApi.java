@@ -24,27 +24,42 @@ import java.util.List;
 public interface CitaApi {
 
     /**
-     * Filtra las citas del sistema dado un rango de fechas, ordenadas de la más
-     * reciente a la más antigua.
+     * Filtra las citas del sistema dado un rango de fechas opcional, ordenadas de la más
+     * reciente a la más antigua. Si no se envían fechas, lista todas las citas.
      *
-     * @param fechaInicial límite inferior del rango (inclusive).
-     * @param fechaFinal   límite superior del rango (inclusive).
-     * @return respuesta HTTP con la lista de citas dentro del rango.
-     * @throws BadRequestException si las fechas son nulas o el rango es inválido.
+     * @param fechaInicial límite inferior del rango (inclusive, opcional).
+     * @param fechaFinal   límite superior del rango (inclusive, opcional).
+     * @return respuesta HTTP con la lista de citas dentro del rango o todas las registradas.
+     * @throws BadRequestException si solo se envía una fecha o la fecha inicial es posterior a la final.
      */
     @GetMapping(value = "/listar-por-fecha",
             produces = {"application/json"})
     ResponseEntity<List<Cita>> listarCitasPorFecha(
-            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime fechaInicial,
-            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime fechaFinal)
+            @RequestParam(required = false)
+            @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime fechaInicial,
+            @RequestParam(required = false)
+            @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime fechaFinal)
             throws BadRequestException;
 
     /**
-     * Registra una nueva cita en el sistema.
+     * Consulta el detalle de una cita médica específica por su identificador único.
+     *
+     * @param citaId identificador de la cita a consultar.
+     * @return respuesta HTTP con la entidad Cita encontrada.
+     * @throws BadRequestException si el identificador es nulo o la cita no existe.
+     */
+    @GetMapping(value = "/consultar",
+            produces = {"application/json"})
+    ResponseEntity<Cita> consultarCita(
+            @RequestParam Long citaId)
+            throws BadRequestException;
+
+    /**
+     * Registra una nueva cita en el sistema validando todas las reglas de negocio críticas.
      *
      * @param citaRq datos de la cita a registrar.
      * @return respuesta HTTP con el resultado de la operación.
-     * @throws BadRequestException si los datos son inválidos o las referencias no existen.
+     * @throws BadRequestException si los datos son inválidos, hay solapamiento de horario o las referencias no existen.
      */
     @PostMapping(value = "/guardar",
             produces = {"application/json"},
@@ -54,16 +69,29 @@ public interface CitaApi {
             throws BadRequestException;
 
     /**
-     * Actualiza una cita existente en el sistema.
+     * Actualiza una cita existente en el sistema teniendo en cuenta su estado actual.
      *
      * @param citaRq datos actualizados de la cita.
      * @return respuesta HTTP con el resultado de la operación.
-     * @throws BadRequestException si los datos son inválidos o las referencias no existen.
+     * @throws BadRequestException si la cita está cancelada/atendida o las referencias no coinciden.
      */
     @PostMapping(value = "/actualizar",
             produces = {"application/json"},
             consumes = {"application/json"})
     ResponseEntity<MiRespuestaRS> actualizarCita(
             @RequestBody CitaRq citaRq)
+            throws BadRequestException;
+
+    /**
+     * Cancela una cita médica explícitamente y actualiza su estado a 'Cancelada'.
+     *
+     * @param citaId identificador de la cita a cancelar.
+     * @return respuesta HTTP con el resultado de la operación.
+     * @throws BadRequestException si la cita no existe o ya fue atendida/cancelada.
+     */
+    @PostMapping(value = "/cancelar",
+            produces = {"application/json"})
+    ResponseEntity<MiRespuestaRS> cancelarCita(
+            @RequestParam Long citaId)
             throws BadRequestException;
 }

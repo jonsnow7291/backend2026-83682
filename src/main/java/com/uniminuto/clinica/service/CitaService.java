@@ -10,35 +10,55 @@ import java.util.List;
 
 /**
  * Servicio de negocio para la gestión de citas de la clínica veterinaria.
+ * Define las operaciones CRUD y validaciones de reglas de negocio para citas.
  */
 public interface CitaService {
 
     /**
      * Lista las citas cuya fecha y hora se encuentren dentro del rango indicado,
-     * ordenadas de la más reciente a la más antigua.
+     * ordenadas de la más reciente a la más antigua. Si los parámetros son nulos,
+     * retorna todas las citas del sistema ordenadas por fecha.
      *
-     * @param fechaInicial límite inferior del rango (inclusive).
-     * @param fechaFinal   límite superior del rango (inclusive).
-     * @return lista de citas dentro del rango.
-     * @throws BadRequestException si las fechas son nulas o el rango es inválido.
+     * @param fechaInicial límite inferior del rango (inclusive, opcional).
+     * @param fechaFinal   límite superior del rango (inclusive, opcional).
+     * @return lista de citas dentro del rango o todas las existentes.
+     * @throws BadRequestException si solo se envía una fecha o la fecha inicial es posterior a la final.
      */
     List<Cita> listarCitasPorFecha(LocalDateTime fechaInicial, LocalDateTime fechaFinal) throws BadRequestException;
 
     /**
-     * Registra una nueva cita.
+     * Consulta una cita por su identificador único.
+     *
+     * @param citaId identificador de la cita.
+     * @return la entidad Cita correspondiente.
+     * @throws BadRequestException si el identificador es inválido o no existe.
+     */
+    Cita consultarCita(Long citaId) throws BadRequestException;
+
+    /**
+     * Registra una nueva cita aplicando las reglas de negocio (15 min veterinario, mascota, fecha actual, estados).
      *
      * @param citaRq datos de la cita a registrar.
      * @return respuesta con el resultado de la operación.
-     * @throws BadRequestException si los datos son inválidos o las referencias no existen.
+     * @throws BadRequestException si los datos son inválidos o hay conflictos de horario.
      */
     MiRespuestaRS guardarCita(CitaRq citaRq) throws BadRequestException;
 
     /**
-     * Actualiza una cita existente.
+     * Actualiza una cita existente verificando las restricciones según su estado actual.
      *
      * @param citaRq datos actualizados de la cita.
      * @return respuesta con el resultado de la operación.
-     * @throws BadRequestException si los datos son inválidos o las referencias no existen.
+     * @throws BadRequestException si la cita no existe, está cancelada o es atendida con modificaciones históricas.
      */
     MiRespuestaRS actualizarCita(CitaRq citaRq) throws BadRequestException;
+
+    /**
+     * Cancela una cita de forma explícita cambiando su estado a 'Cancelada'.
+     *
+     * @param citaId identificador de la cita a cancelar.
+     * @return respuesta con el resultado de la operación.
+     * @throws BadRequestException si la cita no existe o ya está en estado final.
+     */
+    MiRespuestaRS cancelarCita(Long citaId) throws BadRequestException;
 }

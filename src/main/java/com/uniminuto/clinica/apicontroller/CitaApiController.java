@@ -38,6 +38,14 @@ public class CitaApiController implements CitaApi {
      * {@inheritDoc}
      */
     @Override
+    public ResponseEntity<Cita> consultarCita(Long citaId) throws BadRequestException {
+        return ResponseEntity.ok(this.citaService.consultarCita(citaId));
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
     public ResponseEntity<MiRespuestaRS> guardarCita(CitaRq citaRq) throws BadRequestException {
         return ResponseEntity.ok(this.citaService.guardarCita(citaRq));
     }
@@ -48,5 +56,13 @@ public class CitaApiController implements CitaApi {
     @Override
     public ResponseEntity<MiRespuestaRS> actualizarCita(CitaRq citaRq) throws BadRequestException {
         return ResponseEntity.ok(this.citaService.actualizarCita(citaRq));
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public ResponseEntity<MiRespuestaRS> cancelarCita(Long citaId) throws BadRequestException {
+        return ResponseEntity.ok(this.citaService.cancelarCita(citaId));
     }
 }
