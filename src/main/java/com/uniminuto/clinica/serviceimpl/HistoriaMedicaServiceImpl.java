@@ -1,10 +1,14 @@
 package com.uniminuto.clinica.serviceimpl;
 
+import com.uniminuto.clinica.entity.Cita;
+import com.uniminuto.clinica.entity.Cliente;
 import com.uniminuto.clinica.entity.HistoriaMedica;
 import com.uniminuto.clinica.entity.Mascota;
 import com.uniminuto.clinica.exception.BadRequestException;
 import com.uniminuto.clinica.models.HistoriaMedicaRq;
 import com.uniminuto.clinica.models.MiRespuestaRS;
+import com.uniminuto.clinica.repository.CitaRepository;
+import com.uniminuto.clinica.repository.ClienteRepository;
 import com.uniminuto.clinica.repository.HistoriaMedicaRepository;
 import com.uniminuto.clinica.repository.MascotaRepository;
 import com.uniminuto.clinica.service.HistoriaMedicaService;
@@ -34,6 +38,20 @@ public class HistoriaMedicaServiceImpl implements HistoriaMedicaService {
     private MascotaRepository mascotaRepository;
 
     /**
+     * Repositorio JPA para el acceso a datos de clientes, usado para validar que la
+     * mascota pertenezca al cliente indicado.
+     */
+    @Autowired
+    private ClienteRepository clienteRepository;
+
+    /**
+     * Repositorio JPA para el acceso a datos de citas, usado para validar que la
+     * cita asociada esté en estado {@code atendida}.
+     */
+    @Autowired
+    private CitaRepository citaRepository;
+
+    /**
      * {@inheritDoc}
      */
     @Override
@@ -58,7 +76,10 @@ public class HistoriaMedicaServiceImpl implements HistoriaMedicaService {
     @Override
     public MiRespuestaRS guardarHistoriaMedica(HistoriaMedicaRq historiaMedicaRq) throws BadRequestException {
         this.validarHistoriaMedicaRq(historiaMedicaRq);
+
         Mascota mascota = this.obtenerMascotaValida(historiaMedicaRq.getMascotaId());
+        this.validarClienteAsociado(mascota, historiaMedicaRq.getClienteId());
+        this.validarCitaAsociada(mascota, historiaMedicaRq.getCitaId());
 
         HistoriaMedica historiaMedica = new HistoriaMedica();
         historiaMedica.setMascota(mascota);
@@ -90,6 +111,8 @@ public class HistoriaMedicaServiceImpl implements HistoriaMedicaService {
         }
 
         Mascota mascota = this.obtenerMascotaValida(historiaMedicaRq.getMascotaId());
+        this.validarClienteAsociado(mascota, historiaMedicaRq.getClienteId());
+        this.validarCitaAsociada(mascota, historiaMedicaRq.getCitaId());
 
         HistoriaMedica historiaExistente = optHistoriaMedica.get();
         historiaExistente.setMascota(mascota);
@@ -125,6 +148,18 @@ public class HistoriaMedicaServiceImpl implements HistoriaMedicaService {
     }
 
     /**
+     * {@inheritDoc}
+     */
+    @Override
+    public HistoriaMedica consultarHistoriaMedica(Long historiaId) throws BadRequestException {
+        if (historiaId == null || historiaId <= 0) {
+            throw new BadRequestException("El id de la historia medica no puede ser nulo o negativo");
+        }
+        return this.historiaMedicaRepository.findById(historiaId)
+                .orElseThrow(() -> new BadRequestException("La historia medica seleccionada no es valida"));
+    }
+
+    /**
      * Valida que los datos de entrada de una historia médica sean correctos.
      *
      * @param historiaMedicaRq datos a validar.
@@ -136,6 +171,57 @@ public class HistoriaMedicaServiceImpl implements HistoriaMedicaService {
         }
         if (historiaMedicaRq.getMascotaId() == null || historiaMedicaRq.getMascotaId() <= 0) {
             throw new BadRequestException("El id de la mascota no puede ser nulo o negativo");
+        }
+        if (historiaMedicaRq.getClienteId() != null && historiaMedicaRq.getClienteId() <= 0) {
+            throw new BadRequestException("El id del cliente no puede ser nulo o negativo");
+        }
+        if (historiaMedicaRq.getCitaId() != null && historiaMedicaRq.getCitaId() <= 0) {
+            throw new BadRequestException("El id de la cita no puede ser nulo o negativo");
+        }
+    }
+
+    /**
+     * Valida que la mascota indicada pertenezca al cliente indicado, cuando se
+     * proporciona el identificador del cliente.
+     *
+     * @param mascota   mascota seleccionada.
+     * @param clienteId identificador del cliente (puede ser {@code null}).
+     * @throws BadRequestException si la mascota no pertenece al cliente.
+     */
+    private void validarClienteAsociado(Mascota mascota, Long clienteId) throws BadRequestException {
+        if (clienteId == null) {
+            return;
+        }
+        Cliente cliente = this.clienteRepository.findById(clienteId)
+                .orElseThrow(() -> new BadRequestException("El cliente seleccionado no es valido"));
+        if (mascota.getCliente() == null
+                || mascota.getCliente().getClienteId() == null
+                || !mascota.getCliente().getClienteId().equals(cliente.getClienteId())) {
+            throw new BadRequestException("La mascota seleccionada no pertenece al cliente indicado");
+        }
+    }
+
+    /**
+     * Valida que la cita indicada exista, corresponda a la mascota y se encuentre
+     * en estado {@code atendida}, cuando se proporciona su identificador.
+     *
+     * @param mascota mascota seleccionada.
+     * @param citaId  identificador de la cita (puede ser {@code null}).
+     * @throws BadRequestException si la cita no es válida o no está atendida.
+     */
+    private void validarCitaAsociada(Mascota mascota, Long citaId) throws BadRequestException {
+        if (citaId == null) {
+            return;
+        }
+        Cita cita = this.citaRepository.findById(citaId)
+                .orElseThrow(() -> new BadRequestException("La cita seleccionada no es valida"));
+        if (cita.getMascota() == null
+                || cita.getMascota().getMascotaId() == null
+                || !cita.getMascota().getMascotaId().equals(mascota.getMascotaId())) {
+            throw new BadRequestException("La cita seleccionada no corresponde a la mascota indicada");
+        }
+        if (cita.getEstado() == null || !"atendida".equalsIgnoreCase(cita.getEstado().trim())) {
+            throw new BadRequestException("La cita asociada debe estar en estado atendida");
         }
     }
 

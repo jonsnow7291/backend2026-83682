@@ -62,4 +62,17 @@ public interface AnotacionHistoriaApi {
     ResponseEntity<MiRespuestaRS> actualizarAnotacionHistoria(
             @RequestBody AnotacionHistoriaRq anotacionHistoriaRq)
             throws BadRequestException;
+
+    /**
+     * Consulta una anotación de historia médica específica por su identificador.
+     *
+     * @param anotacionId identificador de la anotación.
+     * @return respuesta HTTP con la anotación encontrada.
+     * @throws BadRequestException si el identificador es inválido o la anotación no existe.
+     */
+    @GetMapping(value = "/consultar",
+            produces = {"application/json"})
+    ResponseEntity<AnotacionHistoria> consultarAnotacionHistoria(
+            @RequestParam Long anotacionId)
+            throws BadRequestException;
 }

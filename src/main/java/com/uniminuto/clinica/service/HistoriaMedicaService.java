@@ -52,4 +52,13 @@ public interface HistoriaMedicaService {
      * @throws BadRequestException si el identificador es inválido o la historia no existe.
      */
     MiRespuestaRS eliminarHistoriaMedica(Long historiaId) throws BadRequestException;
+
+    /**
+     * Consulta una historia médica específica por su identificador.
+     *
+     * @param historiaId identificador de la historia médica.
+     * @return la historia médica encontrada.
+     * @throws BadRequestException si el identificador es inválido o la historia no existe.
+     */
+    HistoriaMedica consultarHistoriaMedica(Long historiaId) throws BadRequestException;
 }

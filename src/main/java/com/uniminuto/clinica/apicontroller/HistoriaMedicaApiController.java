@@ -60,4 +60,12 @@ public class HistoriaMedicaApiController implements HistoriaMedicaApi {
     public ResponseEntity<MiRespuestaRS> eliminarHistoriaMedica(Long historiaId) throws BadRequestException {
         return ResponseEntity.ok(this.historiaMedicaService.eliminarHistoriaMedica(historiaId));
     }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public ResponseEntity<HistoriaMedica> consultarHistoriaMedica(Long historiaId) throws BadRequestException {
+        return ResponseEntity.ok(this.historiaMedicaService.consultarHistoriaMedica(historiaId));
+    }
 }
