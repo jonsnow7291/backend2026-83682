@@ -8,6 +8,26 @@ CREATE DATABASE IF NOT EXISTS clinica CHARACTER SET utf8mb4 COLLATE utf8mb4_unic
 USE clinica;
 
 -- ----------------------------------------------------------
+-- 0. Tablas: usuario y especializacion
+-- ----------------------------------------------------------
+CREATE TABLE IF NOT EXISTS usuario (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    username VARCHAR(50) NOT NULL UNIQUE,
+    password_hash TEXT NULL,
+    rol VARCHAR(30) NOT NULL,
+    fecha_creacion DATETIME NULL,
+    activo BOOLEAN NULL DEFAULT TRUE,
+    email VARCHAR(255) NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS especializacion (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    nombre VARCHAR(100) NOT NULL,
+    descripcion TEXT NULL,
+    codigo_especializacion VARCHAR(10) NOT NULL UNIQUE
+);
+
+-- ----------------------------------------------------------
 -- 1. Tabla: cliente
 -- ----------------------------------------------------------
 CREATE TABLE IF NOT EXISTS cliente (
@@ -181,3 +201,31 @@ VALUES
 (2, 1, 2, 2, NOW() - INTERVAL 1 DAY, 'Atendida', 'Dolor de oído'),
 (3, 2, 3, 3, NOW() - INTERVAL 3 HOUR, 'Atendida', 'Revisión general')
 ON DUPLICATE KEY UPDATE motivo=motivo;
+
+INSERT INTO usuario (id, username, password_hash, rol, fecha_creacion, activo, email)
+VALUES
+(1, 'jperez', NULL, 'CLIENTE', NOW(), TRUE, 'juan.perez@mail.com'),
+(2, 'agomez', NULL, 'CLIENTE', NOW(), TRUE, 'ana.gomez@mail.com'),
+(3, 'admin', NULL, 'ADMIN', NOW(), TRUE, 'admin@clinica.com')
+ON DUPLICATE KEY UPDATE username=username;
+
+INSERT INTO especializacion (id, nombre, descripcion, codigo_especializacion)
+VALUES
+(1, 'Medicina General', 'Atención primaria de pequeños animales', 'MG'),
+(2, 'Cirugía', 'Cirugía veterinaria de tejidos blandos y ortopedia', 'CIR')
+ON DUPLICATE KEY UPDATE nombre=nombre;
+
+INSERT INTO historia_medica (id, paciente_id, cita_id, diagnostico, observaciones, fecha_creacion)
+VALUES
+(1, 1, 1, 'Paciente sano', 'Esquema de vacunación al día', NOW())
+ON DUPLICATE KEY UPDATE paciente_id=paciente_id;
+
+INSERT INTO anotacion_historia (id, historia_id, medico_id, fecha, descripcion, observacion, diagnostico)
+VALUES
+(1, 1, 1, NOW(), 'Control de vacunas', 'Sin reacciones adversas', 'Sano')
+ON DUPLICATE KEY UPDATE descripcion=descripcion;
+
+INSERT INTO formula_medica (id, cita_id, medicamento_id, dosis, frecuencia, duracion_dias, indicaciones, fecha_emision, fecha_creacion_registro)
+VALUES
+(1, 2, 1, '5 ml', 'Cada 12 horas', 7, 'Administrar con comida', NOW(), NOW())
+ON DUPLICATE KEY UPDATE dosis=dosis;
