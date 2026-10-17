@@ -39,4 +39,13 @@ public interface AnotacionHistoriaService {
      * @throws BadRequestException si los datos son inválidos o las referencias no existen.
      */
     MiRespuestaRS actualizarAnotacionHistoria(AnotacionHistoriaRq anotacionHistoriaRq) throws BadRequestException;
+
+    /**
+     * Consulta una anotación de historia médica específica por su identificador.
+     *
+     * @param anotacionId identificador de la anotación.
+     * @return la anotación encontrada.
+     * @throws BadRequestException si el identificador es inválido o la anotación no existe.
+     */
+    AnotacionHistoria consultarAnotacionHistoria(Long anotacionId) throws BadRequestException;
 }

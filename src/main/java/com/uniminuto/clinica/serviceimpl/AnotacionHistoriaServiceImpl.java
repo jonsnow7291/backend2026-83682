@@ -156,4 +156,16 @@ public class AnotacionHistoriaServiceImpl implements AnotacionHistoriaService {
         return this.medicoRepository.findById(medicoId)
                 .orElseThrow(() -> new BadRequestException("El medico seleccionado no es valido"));
     }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public AnotacionHistoria consultarAnotacionHistoria(Long anotacionId) throws BadRequestException {
+        if (anotacionId == null || anotacionId <= 0) {
+            throw new BadRequestException("El id de la anotacion no puede ser nulo o negativo");
+        }
+        return this.anotacionHistoriaRepository.findById(anotacionId)
+                .orElseThrow(() -> new BadRequestException("La anotacion seleccionada no es valida"));
+    }
 }

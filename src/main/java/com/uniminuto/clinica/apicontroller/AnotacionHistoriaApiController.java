@@ -50,4 +50,12 @@ public class AnotacionHistoriaApiController implements AnotacionHistoriaApi {
             throws BadRequestException {
         return ResponseEntity.ok(this.anotacionHistoriaService.actualizarAnotacionHistoria(anotacionHistoriaRq));
     }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public ResponseEntity<AnotacionHistoria> consultarAnotacionHistoria(Long anotacionId) throws BadRequestException {
+        return ResponseEntity.ok(this.anotacionHistoriaService.consultarAnotacionHistoria(anotacionId));
+    }
 }

@@ -82,4 +82,17 @@ public interface HistoriaMedicaApi {
     ResponseEntity<MiRespuestaRS> eliminarHistoriaMedica(
             @RequestParam Long historiaId)
             throws BadRequestException;
+
+    /**
+     * Consulta una historia médica específica por su identificador.
+     *
+     * @param historiaId identificador de la historia médica.
+     * @return respuesta HTTP con la historia médica encontrada.
+     * @throws BadRequestException si el identificador es inválido o la historia no existe.
+     */
+    @GetMapping(value = "/consultar",
+            produces = {"application/json"})
+    ResponseEntity<HistoriaMedica> consultarHistoriaMedica(
+            @RequestParam Long historiaId)
+            throws BadRequestException;
 }
