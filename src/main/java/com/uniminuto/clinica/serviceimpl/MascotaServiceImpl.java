@@ -35,6 +35,18 @@ public class MascotaServiceImpl implements MascotaService {
         return mascotaRepository.findAll();
     }
 
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public Mascota consultarMascota(Integer mascotaId) throws BadRequestException {
+        if (mascotaId == null || mascotaId <= 0) {
+            throw new BadRequestException("El id de la mascota no puede ser nulo o negativo");
+        }
+        return this.mascotaRepository.findById(mascotaId)
+                .orElseThrow(() -> new BadRequestException("La mascota seleccionada no existe"));
+    }
+
     @Override
     public List<Mascota> listarMascotasOrdenado(boolean ascendente) throws BadRequestException {
         List<Mascota> mascotas = mascotaRepository.findAll();

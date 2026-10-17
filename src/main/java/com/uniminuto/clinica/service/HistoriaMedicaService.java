@@ -45,11 +45,12 @@ public interface HistoriaMedicaService {
     MiRespuestaRS actualizarHistoriaMedica(HistoriaMedicaRq historiaMedicaRq) throws BadRequestException;
 
     /**
-     * Elimina una historia médica existente.
+     * Elimina una historia médica existente que aún no tiene anotaciones clínicas.
      *
      * @param historiaId identificador de la historia médica a eliminar.
      * @return respuesta con el resultado de la operación.
-     * @throws BadRequestException si el identificador es inválido o la historia no existe.
+     * @throws BadRequestException si el identificador es inválido, la historia no existe
+     *                             o ya tiene anotaciones asociadas.
      */
     MiRespuestaRS eliminarHistoriaMedica(Long historiaId) throws BadRequestException;
 

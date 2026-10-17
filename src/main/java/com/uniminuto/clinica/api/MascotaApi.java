@@ -9,6 +9,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -44,6 +45,19 @@ public interface MascotaApi {
             throws BadRequestException;
 
 
+    /**
+     * Consulta una mascota específica por su identificador.
+     *
+     * @param mascotaId identificador de la mascota.
+     * @return respuesta HTTP con la mascota encontrada.
+     * @throws BadRequestException si el identificador es inválido o la mascota no existe.
+     */
+    @GetMapping(value = "/consultar",
+            produces = {"application/json"})
+    ResponseEntity<Mascota> consultarMascota(
+            @RequestParam Integer mascotaId)
+            throws BadRequestException;
+
     @PostMapping(value = "/guardar",
             produces = {"application/json"},
             consumes = {"application/json"})
@@ -51,7 +65,7 @@ public interface MascotaApi {
             @RequestBody MascotaRq mascotaRq)
             throws BadRequestException;
 
-    @PostMapping(value = "/actualizar",
+    @PutMapping(value = "/actualizar",
             produces = {"application/json"},
             consumes = {"application/json"})
     ResponseEntity<MiRespuestaRS> actualizarMascota(

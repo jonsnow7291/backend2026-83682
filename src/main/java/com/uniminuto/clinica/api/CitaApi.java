@@ -8,7 +8,9 @@ import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -55,6 +57,21 @@ public interface CitaApi {
             throws BadRequestException;
 
     /**
+     * Lista las citas atendidas de una mascota, de la más reciente a la más antigua.
+     * Alimenta los combos dependientes de historias clínicas y fórmulas médicas
+     * (Cliente -> Mascota -> Cita atendida).
+     *
+     * @param mascotaId identificador de la mascota.
+     * @return respuesta HTTP con las citas atendidas de la mascota.
+     * @throws BadRequestException si el identificador de la mascota es inválido o no existe.
+     */
+    @GetMapping(value = "/listar-atendidas-por-mascota",
+            produces = {"application/json"})
+    ResponseEntity<List<Cita>> listarCitasAtendidasPorMascota(
+            @RequestParam Integer mascotaId)
+            throws BadRequestException;
+
+    /**
      * Registra una nueva cita en el sistema validando todas las reglas de negocio críticas.
      *
      * @param citaRq datos de la cita a registrar.
@@ -75,7 +92,7 @@ public interface CitaApi {
      * @return respuesta HTTP con el resultado de la operación.
      * @throws BadRequestException si la cita está cancelada/atendida o las referencias no coinciden.
      */
-    @PostMapping(value = "/actualizar",
+    @PutMapping(value = "/actualizar",
             produces = {"application/json"},
             consumes = {"application/json"})
     ResponseEntity<MiRespuestaRS> actualizarCita(
@@ -89,7 +106,7 @@ public interface CitaApi {
      * @return respuesta HTTP con el resultado de la operación.
      * @throws BadRequestException si la cita no existe o ya fue atendida/cancelada.
      */
-    @PostMapping(value = "/cancelar",
+    @PatchMapping(value = "/cancelar",
             produces = {"application/json"})
     ResponseEntity<MiRespuestaRS> cancelarCita(
             @RequestParam Long citaId)

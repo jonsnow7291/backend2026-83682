@@ -38,6 +38,26 @@ public class HistoriaMedica {
     private Mascota mascota;
 
     /**
+     * Cita (consulta) atendida que originó la historia clínica. De ella se obtienen
+     * el veterinario, la fecha y hora, el motivo y el estado de la consulta.
+     */
+    @ManyToOne
+    @JoinColumn(name = "cita_id")
+    private Cita cita;
+
+    /**
+     * Diagnóstico registrado en la consulta.
+     */
+    @Column(name = "diagnostico", columnDefinition = "TEXT")
+    private String diagnostico;
+
+    /**
+     * Observaciones generales registradas en la consulta.
+     */
+    @Column(name = "observaciones", columnDefinition = "TEXT")
+    private String observaciones;
+
+    /**
      * Fecha de creación de la historia médica.
      */
     @Column(name = "fecha_creacion")

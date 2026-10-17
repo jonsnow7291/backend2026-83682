@@ -54,4 +54,16 @@ public class AnotacionHistoria {
      */
     @Column(name = "descripcion", nullable = false, columnDefinition = "TEXT")
     private String descripcion;
+
+    /**
+     * Observación clínica adicional de la anotación.
+     */
+    @Column(name = "observacion", columnDefinition = "TEXT")
+    private String observacion;
+
+    /**
+     * Diagnóstico o evolución del paciente registrado en la anotación.
+     */
+    @Column(name = "diagnostico", columnDefinition = "TEXT")
+    private String diagnostico;
 }

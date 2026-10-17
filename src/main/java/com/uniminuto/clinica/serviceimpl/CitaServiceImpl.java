@@ -96,6 +96,19 @@ public class CitaServiceImpl implements CitaService {
      * {@inheritDoc}
      */
     @Override
+    public List<Cita> listarCitasAtendidasPorMascota(Integer mascotaId) throws BadRequestException {
+        if (mascotaId == null || mascotaId <= 0) {
+            throw new BadRequestException("El identificador de la mascota no puede ser nulo o menor o igual a cero.");
+        }
+        Mascota mascota = this.obtenerMascotaValida(mascotaId);
+        return this.citaRepository.findAllByMascota_MascotaIdAndEstadoIgnoreCaseOrderByFechaHoraDesc(
+                mascota.getMascotaId(), "atendida");
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
     public MiRespuestaRS guardarCita(CitaRq citaRq) throws BadRequestException {
         this.validarCitaRq(citaRq, true);
 

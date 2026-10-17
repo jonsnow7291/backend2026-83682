@@ -1,6 +1,5 @@
 package com.uniminuto.clinica.api;
 
-import com.uniminuto.clinica.entity.Cita;
 import com.uniminuto.clinica.entity.FormulaMedica;
 import com.uniminuto.clinica.exception.BadRequestException;
 import com.uniminuto.clinica.models.FormulaMedicaRq;
@@ -9,6 +8,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -50,20 +50,6 @@ public interface FormulaMedicaApi {
             throws BadRequestException;
 
     /**
-     * Lista las citas atendidas de una mascota, que son las consultas sobre las que
-     * se puede emitir una fórmula médica. Alimenta el combo dependiente del formulario.
-     *
-     * @param mascotaId identificador de la mascota.
-     * @return respuesta HTTP con las citas atendidas, de la más reciente a la más antigua.
-     * @throws BadRequestException si el identificador de la mascota es inválido.
-     */
-    @GetMapping(value = "/citas-disponibles",
-            produces = {"application/json"})
-    ResponseEntity<List<Cita>> listarCitasDisponibles(
-            @RequestParam Integer mascotaId)
-            throws BadRequestException;
-
-    /**
      * Registra una nueva fórmula médica asociada a una cita atendida.
      *
      * @param formulaMedicaRq datos de la fórmula médica a registrar.
@@ -85,7 +71,7 @@ public interface FormulaMedicaApi {
      * @throws BadRequestException si los datos son inválidos, la fórmula no existe
      *                             o incumple las reglas de negocio.
      */
-    @PostMapping(value = "/actualizar",
+    @PutMapping(value = "/actualizar",
             produces = {"application/json"},
             consumes = {"application/json"})
     ResponseEntity<MiRespuestaRS> actualizarFormulaMedica(

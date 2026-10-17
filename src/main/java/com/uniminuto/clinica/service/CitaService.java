@@ -45,6 +45,15 @@ public interface CitaService {
     MiRespuestaRS guardarCita(CitaRq citaRq) throws BadRequestException;
 
     /**
+     * Lista las citas en estado atendida de una mascota, de la más reciente a la más antigua.
+     *
+     * @param mascotaId identificador de la mascota.
+     * @return citas atendidas de la mascota.
+     * @throws BadRequestException si el identificador es inválido o la mascota no existe.
+     */
+    List<Cita> listarCitasAtendidasPorMascota(Integer mascotaId) throws BadRequestException;
+
+    /**
      * Actualiza una cita existente verificando las restricciones según su estado actual.
      *
      * @param citaRq datos actualizados de la cita.

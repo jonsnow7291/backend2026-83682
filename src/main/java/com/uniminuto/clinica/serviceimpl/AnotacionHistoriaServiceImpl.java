@@ -64,7 +64,7 @@ public class AnotacionHistoriaServiceImpl implements AnotacionHistoriaService {
         AnotacionHistoria anotacion = new AnotacionHistoria();
         anotacion.setHistoriaMedica(historiaMedica);
         anotacion.setMedico(medico);
-        anotacion.setDescripcion(anotacionHistoriaRq.getDescripcion());
+        this.asignarTextos(anotacion, anotacionHistoriaRq);
         anotacion.setFecha(LocalDateTime.now());
 
         this.anotacionHistoriaRepository.save(anotacion);
@@ -99,7 +99,7 @@ public class AnotacionHistoriaServiceImpl implements AnotacionHistoriaService {
         AnotacionHistoria anotacionExistente = optAnotacion.get();
         anotacionExistente.setHistoriaMedica(historiaMedica);
         anotacionExistente.setMedico(medico);
-        anotacionExistente.setDescripcion(anotacionHistoriaRq.getDescripcion());
+        this.asignarTextos(anotacionExistente, anotacionHistoriaRq);
 
         this.anotacionHistoriaRepository.save(anotacionExistente);
 
@@ -125,9 +125,26 @@ public class AnotacionHistoriaServiceImpl implements AnotacionHistoriaService {
         if (anotacionHistoriaRq.getMedicoId() == null || anotacionHistoriaRq.getMedicoId() <= 0) {
             throw new BadRequestException("El id del medico no puede ser nulo o negativo");
         }
-        if (anotacionHistoriaRq.getDescripcion() == null || anotacionHistoriaRq.getDescripcion().isEmpty()) {
+        if (anotacionHistoriaRq.getDescripcion() == null || anotacionHistoriaRq.getDescripcion().isBlank()) {
             throw new BadRequestException("La descripcion de la anotacion no puede ser nula o vacía");
         }
+        if (anotacionHistoriaRq.getDiagnostico() == null || anotacionHistoriaRq.getDiagnostico().isBlank()) {
+            throw new BadRequestException("El diagnostico o evolucion de la anotacion es obligatorio");
+        }
+    }
+
+    /**
+     * Copia a la anotación la descripción, la observación y el diagnóstico de la solicitud.
+     *
+     * @param anotacion           anotación (nueva o existente) que recibe los datos.
+     * @param anotacionHistoriaRq datos de entrada validados.
+     */
+    private void asignarTextos(AnotacionHistoria anotacion, AnotacionHistoriaRq anotacionHistoriaRq) {
+        anotacion.setDescripcion(anotacionHistoriaRq.getDescripcion().trim());
+        anotacion.setObservacion(anotacionHistoriaRq.getObservacion() != null
+                ? anotacionHistoriaRq.getObservacion().trim()
+                : null);
+        anotacion.setDiagnostico(anotacionHistoriaRq.getDiagnostico().trim());
     }
 
     /**

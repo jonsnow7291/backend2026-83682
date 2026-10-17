@@ -21,4 +21,13 @@ public interface AnotacionHistoriaRepository extends JpaRepository<AnotacionHist
      * @return lista de anotaciones de la historia médica indicada.
      */
     List<AnotacionHistoria> findAllByHistoriaMedicaOrderByFechaDesc(HistoriaMedica historiaMedica);
+
+    /**
+     * Indica si una historia médica tiene anotaciones registradas. Utilizado para
+     * impedir la eliminación de historias con información clínica asociada.
+     *
+     * @param historiaId identificador de la historia médica.
+     * @return {@code true} si la historia tiene al menos una anotación.
+     */
+    boolean existsByHistoriaMedica_Id(Long historiaId);
 }

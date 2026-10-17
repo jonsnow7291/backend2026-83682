@@ -2,12 +2,14 @@ package com.uniminuto.clinica.serviceimpl;
 
 import com.uniminuto.clinica.entity.Cita;
 import com.uniminuto.clinica.entity.FormulaMedica;
+import com.uniminuto.clinica.entity.Mascota;
 import com.uniminuto.clinica.entity.Medicamento;
 import com.uniminuto.clinica.exception.BadRequestException;
 import com.uniminuto.clinica.models.FormulaMedicaRq;
 import com.uniminuto.clinica.models.MiRespuestaRS;
 import com.uniminuto.clinica.repository.CitaRepository;
 import com.uniminuto.clinica.repository.FormulaMedicaRepository;
+import com.uniminuto.clinica.repository.MascotaRepository;
 import com.uniminuto.clinica.repository.MedicamentoRepository;
 import com.uniminuto.clinica.service.FormulaMedicaService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -51,6 +53,13 @@ public class FormulaMedicaServiceImpl implements FormulaMedicaService {
     private CitaRepository citaRepository;
 
     /**
+     * Repositorio JPA para el acceso a datos de mascotas, usado para validar que la
+     * mascota exista y pertenezca a un cliente registrado.
+     */
+    @Autowired
+    private MascotaRepository mascotaRepository;
+
+    /**
      * Repositorio JPA para el acceso a datos de medicamentos, usado para validar
      * el medicamento prescrito.
      */
@@ -75,18 +84,6 @@ public class FormulaMedicaServiceImpl implements FormulaMedicaService {
         }
         return this.formulaMedicaRepository.findById(formulaId)
                 .orElseThrow(() -> new BadRequestException("La formula medica seleccionada no es valida"));
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    public List<Cita> listarCitasDisponibles(Integer mascotaId) throws BadRequestException {
-        if (mascotaId == null || mascotaId <= 0) {
-            throw new BadRequestException("El id de la mascota no puede ser nulo o negativo");
-        }
-        return this.citaRepository
-                .findAllByMascota_MascotaIdAndEstadoIgnoreCaseOrderByFechaHoraDesc(mascotaId, ESTADO_CITA_ATENDIDA);
     }
 
     /**
@@ -137,7 +134,8 @@ public class FormulaMedicaServiceImpl implements FormulaMedicaService {
      */
     private void asignarDatosValidados(FormulaMedica formulaMedica, FormulaMedicaRq formulaMedicaRq)
             throws BadRequestException {
-        Cita cita = this.obtenerCitaValida(formulaMedicaRq.getCitaId(), formulaMedicaRq.getMascotaId());
+        Mascota mascota = this.obtenerMascotaValida(formulaMedicaRq.getMascotaId());
+        Cita cita = this.obtenerCitaValida(formulaMedicaRq.getCitaId(), mascota.getMascotaId());
 
         LocalDateTime fechaEmision = formulaMedicaRq.getFechaEmision() != null
                 ? formulaMedicaRq.getFechaEmision()
@@ -200,9 +198,26 @@ public class FormulaMedicaServiceImpl implements FormulaMedicaService {
     }
 
     /**
+     * Obtiene la mascota indicada validando que exista y que pertenezca a un cliente
+     * registrado (reglas 1 y 2 del módulo de fórmulas).
+     *
+     * @param mascotaId identificador de la mascota.
+     * @return la mascota encontrada.
+     * @throws BadRequestException si la mascota no existe o no tiene un cliente asociado.
+     */
+    private Mascota obtenerMascotaValida(Integer mascotaId) throws BadRequestException {
+        Mascota mascota = this.mascotaRepository.findById(mascotaId)
+                .orElseThrow(() -> new BadRequestException("La mascota seleccionada no existe"));
+        if (mascota.getCliente() == null || mascota.getCliente().getClienteId() == null) {
+            throw new BadRequestException("La mascota seleccionada no pertenece a un cliente registrado");
+        }
+        return mascota;
+    }
+
+    /**
      * Obtiene la cita indicada validando que exista, que corresponda a la mascota
-     * indicada y que se encuentre en estado {@code atendida} (la fórmula solo se
-     * emite sobre una consulta ya realizada).
+     * indicada, que se encuentre en estado {@code atendida} (la fórmula solo se
+     * emite sobre una consulta ya realizada) y que tenga un veterinario asignado.
      *
      * @param citaId    identificador de la cita.
      * @param mascotaId identificador de la mascota a la que se prescribe.
@@ -219,6 +234,9 @@ public class FormulaMedicaServiceImpl implements FormulaMedicaService {
         }
         if (cita.getEstado() == null || !ESTADO_CITA_ATENDIDA.equalsIgnoreCase(cita.getEstado().trim())) {
             throw new BadRequestException("Solo se pueden emitir formulas sobre citas en estado atendida");
+        }
+        if (cita.getMedico() == null || cita.getMedico().getId() == null) {
+            throw new BadRequestException("La cita seleccionada no tiene un veterinario registrado");
         }
         return cita;
     }

@@ -98,8 +98,12 @@ CREATE TABLE IF NOT EXISTS cita (
 CREATE TABLE IF NOT EXISTS historia_medica (
     id BIGINT AUTO_INCREMENT PRIMARY KEY,
     paciente_id INT NOT NULL,
+    cita_id BIGINT NULL,
+    diagnostico TEXT NULL,
+    observaciones TEXT NULL,
     fecha_creacion DATETIME NULL,
-    CONSTRAINT fk_historia_mascota FOREIGN KEY (paciente_id) REFERENCES mascota (mascota_id) ON DELETE CASCADE
+    CONSTRAINT fk_historia_mascota FOREIGN KEY (paciente_id) REFERENCES mascota (mascota_id) ON DELETE CASCADE,
+    CONSTRAINT fk_historia_cita FOREIGN KEY (cita_id) REFERENCES cita (id)
 );
 
 -- ----------------------------------------------------------
@@ -111,6 +115,8 @@ CREATE TABLE IF NOT EXISTS anotacion_historia (
     medico_id BIGINT NOT NULL,
     fecha DATETIME NULL,
     descripcion TEXT NOT NULL,
+    observacion TEXT NULL,
+    diagnostico TEXT NULL,
     CONSTRAINT fk_anotacion_historia FOREIGN KEY (historia_id) REFERENCES historia_medica (id) ON DELETE CASCADE,
     CONSTRAINT fk_anotacion_medico FOREIGN KEY (medico_id) REFERENCES medico (id) ON DELETE CASCADE
 );

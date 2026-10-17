@@ -30,4 +30,13 @@ public interface HistoriaMedicaRepository extends JpaRepository<HistoriaMedica, 
      */
     List<HistoriaMedica> findAllByFechaCreacionBetweenOrderByFechaCreacionDesc(
             LocalDateTime fechaInicial, LocalDateTime fechaFinal);
+
+    /**
+     * Busca las historias médicas asociadas a una cita. Utilizado para evitar
+     * registrar dos historias clínicas sobre la misma consulta.
+     *
+     * @param citaId identificador de la cita.
+     * @return historias médicas asociadas a la cita.
+     */
+    List<HistoriaMedica> findAllByCita_Id(Long citaId);
 }

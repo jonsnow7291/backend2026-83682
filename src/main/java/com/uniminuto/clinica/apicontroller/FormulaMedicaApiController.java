@@ -1,7 +1,6 @@
 package com.uniminuto.clinica.apicontroller;
 
 import com.uniminuto.clinica.api.FormulaMedicaApi;
-import com.uniminuto.clinica.entity.Cita;
 import com.uniminuto.clinica.entity.FormulaMedica;
 import com.uniminuto.clinica.exception.BadRequestException;
 import com.uniminuto.clinica.models.FormulaMedicaRq;
@@ -40,14 +39,6 @@ public class FormulaMedicaApiController implements FormulaMedicaApi {
     @Override
     public ResponseEntity<FormulaMedica> consultarFormulaMedica(Long formulaId) throws BadRequestException {
         return ResponseEntity.ok(this.formulaMedicaService.consultarFormulaMedica(formulaId));
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    public ResponseEntity<List<Cita>> listarCitasDisponibles(Integer mascotaId) throws BadRequestException {
-        return ResponseEntity.ok(this.formulaMedicaService.listarCitasDisponibles(mascotaId));
     }
 
     /**

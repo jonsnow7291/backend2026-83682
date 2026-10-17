@@ -14,8 +14,8 @@ public class HistoriaMedicaRq {
     private Long historiaId;
 
     /**
-     * Identificador del cliente al que pertenece la mascota. Opcional: si se envía,
-     * se valida que la mascota seleccionada le pertenezca.
+     * Identificador del cliente al que pertenece la mascota. Se valida que la
+     * mascota seleccionada le pertenezca.
      */
     private Long clienteId;
 
@@ -25,9 +25,19 @@ public class HistoriaMedicaRq {
     private Integer mascotaId;
 
     /**
-     * Identificador de la cita asociada a la historia. Opcional: si se envía, se
-     * valida que la cita exista, corresponda a la mascota y esté en estado
-     * {@code atendida}.
+     * Identificador de la cita asociada a la historia. Se valida que la cita exista,
+     * corresponda a la mascota, esté en estado {@code atendida} y no tenga ya otra
+     * historia clínica registrada.
      */
     private Long citaId;
+
+    /**
+     * Diagnóstico de la consulta (obligatorio).
+     */
+    private String diagnostico;
+
+    /**
+     * Observaciones generales de la consulta (opcional).
+     */
+    private String observaciones;
 }

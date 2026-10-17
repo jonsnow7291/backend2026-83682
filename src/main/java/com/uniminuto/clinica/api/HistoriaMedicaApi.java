@@ -7,8 +7,10 @@ import com.uniminuto.clinica.models.MiRespuestaRS;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.CrossOrigin;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -63,7 +65,7 @@ public interface HistoriaMedicaApi {
      * @return respuesta HTTP con el resultado de la operación.
      * @throws BadRequestException si los datos son inválidos, la historia o la mascota no existen.
      */
-    @PostMapping(value = "/actualizar",
+    @PutMapping(value = "/actualizar",
             produces = {"application/json"},
             consumes = {"application/json"})
     ResponseEntity<MiRespuestaRS> actualizarHistoriaMedica(
@@ -71,13 +73,14 @@ public interface HistoriaMedicaApi {
             throws BadRequestException;
 
     /**
-     * Elimina una historia médica existente.
+     * Elimina una historia médica existente que aún no tiene anotaciones.
      *
      * @param historiaId identificador de la historia médica a eliminar.
      * @return respuesta HTTP con el resultado de la operación.
-     * @throws BadRequestException si el identificador es inválido o la historia no existe.
+     * @throws BadRequestException si el identificador es inválido, la historia no existe
+     *                             o ya tiene anotaciones clínicas asociadas.
      */
-    @PostMapping(value = "/eliminar",
+    @DeleteMapping(value = "/eliminar",
             produces = {"application/json"})
     ResponseEntity<MiRespuestaRS> eliminarHistoriaMedica(
             @RequestParam Long historiaId)

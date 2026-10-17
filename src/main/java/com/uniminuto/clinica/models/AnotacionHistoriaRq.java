@@ -27,4 +27,14 @@ public class AnotacionHistoriaRq {
      * Descripción/contenido clínico de la anotación.
      */
     private String descripcion;
+
+    /**
+     * Observación clínica adicional (opcional).
+     */
+    private String observacion;
+
+    /**
+     * Diagnóstico o evolución del paciente (obligatorio).
+     */
+    private String diagnostico;
 }

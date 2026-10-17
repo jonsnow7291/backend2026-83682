@@ -7,6 +7,7 @@ import com.uniminuto.clinica.entity.Mascota;
 import com.uniminuto.clinica.exception.BadRequestException;
 import com.uniminuto.clinica.models.HistoriaMedicaRq;
 import com.uniminuto.clinica.models.MiRespuestaRS;
+import com.uniminuto.clinica.repository.AnotacionHistoriaRepository;
 import com.uniminuto.clinica.repository.CitaRepository;
 import com.uniminuto.clinica.repository.ClienteRepository;
 import com.uniminuto.clinica.repository.HistoriaMedicaRepository;
@@ -52,6 +53,13 @@ public class HistoriaMedicaServiceImpl implements HistoriaMedicaService {
     private CitaRepository citaRepository;
 
     /**
+     * Repositorio JPA para el acceso a datos de anotaciones, usado para impedir la
+     * eliminación de historias con información clínica asociada.
+     */
+    @Autowired
+    private AnotacionHistoriaRepository anotacionHistoriaRepository;
+
+    /**
      * {@inheritDoc}
      */
     @Override
@@ -79,10 +87,11 @@ public class HistoriaMedicaServiceImpl implements HistoriaMedicaService {
 
         Mascota mascota = this.obtenerMascotaValida(historiaMedicaRq.getMascotaId());
         this.validarClienteAsociado(mascota, historiaMedicaRq.getClienteId());
-        this.validarCitaAsociada(mascota, historiaMedicaRq.getCitaId());
+        Cita cita = this.validarCitaAsociada(mascota, historiaMedicaRq.getCitaId());
+        this.validarCitaSinHistoria(cita.getId(), null);
 
         HistoriaMedica historiaMedica = new HistoriaMedica();
-        historiaMedica.setMascota(mascota);
+        this.asignarDatos(historiaMedica, mascota, cita, historiaMedicaRq);
         historiaMedica.setFechaCreacion(LocalDateTime.now());
 
         this.historiaMedicaRepository.save(historiaMedica);
@@ -112,10 +121,11 @@ public class HistoriaMedicaServiceImpl implements HistoriaMedicaService {
 
         Mascota mascota = this.obtenerMascotaValida(historiaMedicaRq.getMascotaId());
         this.validarClienteAsociado(mascota, historiaMedicaRq.getClienteId());
-        this.validarCitaAsociada(mascota, historiaMedicaRq.getCitaId());
+        Cita cita = this.validarCitaAsociada(mascota, historiaMedicaRq.getCitaId());
+        this.validarCitaSinHistoria(cita.getId(), historiaMedicaRq.getHistoriaId());
 
         HistoriaMedica historiaExistente = optHistoriaMedica.get();
-        historiaExistente.setMascota(mascota);
+        this.asignarDatos(historiaExistente, mascota, cita, historiaMedicaRq);
 
         this.historiaMedicaRepository.save(historiaExistente);
 
@@ -137,6 +147,11 @@ public class HistoriaMedicaServiceImpl implements HistoriaMedicaService {
         Optional<HistoriaMedica> optHistoriaMedica = this.historiaMedicaRepository.findById(historiaId);
         if (optHistoriaMedica.isEmpty()) {
             throw new BadRequestException("La historia medica seleccionada no es valida");
+        }
+
+        if (this.anotacionHistoriaRepository.existsByHistoriaMedica_Id(historiaId)) {
+            throw new BadRequestException(
+                    "La historia medica tiene anotaciones clinicas registradas y no puede eliminarse");
         }
 
         this.historiaMedicaRepository.delete(optHistoriaMedica.get());
@@ -172,26 +187,59 @@ public class HistoriaMedicaServiceImpl implements HistoriaMedicaService {
         if (historiaMedicaRq.getMascotaId() == null || historiaMedicaRq.getMascotaId() <= 0) {
             throw new BadRequestException("El id de la mascota no puede ser nulo o negativo");
         }
-        if (historiaMedicaRq.getClienteId() != null && historiaMedicaRq.getClienteId() <= 0) {
+        if (historiaMedicaRq.getClienteId() == null || historiaMedicaRq.getClienteId() <= 0) {
             throw new BadRequestException("El id del cliente no puede ser nulo o negativo");
         }
-        if (historiaMedicaRq.getCitaId() != null && historiaMedicaRq.getCitaId() <= 0) {
+        if (historiaMedicaRq.getCitaId() == null || historiaMedicaRq.getCitaId() <= 0) {
             throw new BadRequestException("El id de la cita no puede ser nulo o negativo");
+        }
+        if (historiaMedicaRq.getDiagnostico() == null || historiaMedicaRq.getDiagnostico().isBlank()) {
+            throw new BadRequestException("El diagnostico de la historia medica es obligatorio");
         }
     }
 
     /**
-     * Valida que la mascota indicada pertenezca al cliente indicado, cuando se
-     * proporciona el identificador del cliente.
+     * Copia a la historia médica la mascota, la cita y los datos clínicos de la solicitud.
+     *
+     * @param historiaMedica   historia médica (nueva o existente) que recibe los datos.
+     * @param mascota          mascota validada.
+     * @param cita             cita atendida validada.
+     * @param historiaMedicaRq datos de entrada validados.
+     */
+    private void asignarDatos(HistoriaMedica historiaMedica, Mascota mascota, Cita cita,
+                              HistoriaMedicaRq historiaMedicaRq) {
+        historiaMedica.setMascota(mascota);
+        historiaMedica.setCita(cita);
+        historiaMedica.setDiagnostico(historiaMedicaRq.getDiagnostico().trim());
+        historiaMedica.setObservaciones(historiaMedicaRq.getObservaciones() != null
+                ? historiaMedicaRq.getObservaciones().trim()
+                : null);
+    }
+
+    /**
+     * Valida que la cita no tenga ya otra historia clínica registrada, para evitar
+     * duplicidad de información.
+     *
+     * @param citaId              identificador de la cita.
+     * @param historiaIdExcluir   historia que se está actualizando ({@code null} al crear).
+     * @throws BadRequestException si la cita ya tiene otra historia clínica.
+     */
+    private void validarCitaSinHistoria(Long citaId, Long historiaIdExcluir) throws BadRequestException {
+        boolean existeOtra = this.historiaMedicaRepository.findAllByCita_Id(citaId).stream()
+                .anyMatch(historia -> !historia.getId().equals(historiaIdExcluir));
+        if (existeOtra) {
+            throw new BadRequestException("La cita seleccionada ya tiene una historia clinica registrada");
+        }
+    }
+
+    /**
+     * Valida que la mascota indicada pertenezca al cliente indicado.
      *
      * @param mascota   mascota seleccionada.
-     * @param clienteId identificador del cliente (puede ser {@code null}).
-     * @throws BadRequestException si la mascota no pertenece al cliente.
+     * @param clienteId identificador del cliente.
+     * @throws BadRequestException si el cliente no existe o la mascota no le pertenece.
      */
     private void validarClienteAsociado(Mascota mascota, Long clienteId) throws BadRequestException {
-        if (clienteId == null) {
-            return;
-        }
         Cliente cliente = this.clienteRepository.findById(clienteId)
                 .orElseThrow(() -> new BadRequestException("El cliente seleccionado no es valido"));
         if (mascota.getCliente() == null
@@ -203,16 +251,14 @@ public class HistoriaMedicaServiceImpl implements HistoriaMedicaService {
 
     /**
      * Valida que la cita indicada exista, corresponda a la mascota y se encuentre
-     * en estado {@code atendida}, cuando se proporciona su identificador.
+     * en estado {@code atendida}.
      *
      * @param mascota mascota seleccionada.
-     * @param citaId  identificador de la cita (puede ser {@code null}).
+     * @param citaId  identificador de la cita.
+     * @return la cita validada.
      * @throws BadRequestException si la cita no es válida o no está atendida.
      */
-    private void validarCitaAsociada(Mascota mascota, Long citaId) throws BadRequestException {
-        if (citaId == null) {
-            return;
-        }
+    private Cita validarCitaAsociada(Mascota mascota, Long citaId) throws BadRequestException {
         Cita cita = this.citaRepository.findById(citaId)
                 .orElseThrow(() -> new BadRequestException("La cita seleccionada no es valida"));
         if (cita.getMascota() == null
@@ -223,6 +269,7 @@ public class HistoriaMedicaServiceImpl implements HistoriaMedicaService {
         if (cita.getEstado() == null || !"atendida".equalsIgnoreCase(cita.getEstado().trim())) {
             throw new BadRequestException("La cita asociada debe estar en estado atendida");
         }
+        return cita;
     }
 
     /**

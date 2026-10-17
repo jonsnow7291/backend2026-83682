@@ -98,51 +98,63 @@ El servidor iniciará en:
 
 ## 📡 3. Catálogo de Endpoints REST Implementados
 
+> Convención HTTP: `GET` para consultas, `POST` para crear, `PUT` para actualizar,
+> `PATCH` para cambios parciales de estado y `DELETE` para eliminar. Las violaciones de
+> reglas de negocio responden `400` con un mensaje comprensible; los errores no
+> controlados responden `500` con un mensaje genérico (el detalle queda en el log).
+
 ### 📅 Citas Médicas (`/clinica/v1/cita`)
-* `GET /cita/listar-por-fecha?fechaInicial={iso}&fechaFinal={iso}`: Listar citas por rango de fecha ordenadas descendente.
+* `GET /cita/listar-por-fecha?fechaInicial={iso}&fechaFinal={iso}`: Listar citas (todas o por rango) ordenadas descendente.
 * `GET /cita/consultar?citaId={id}`: Consultar el detalle de una cita específica.
+* `GET /cita/listar-atendidas-por-mascota?mascotaId={id}`: Citas atendidas de una mascota (combo dependiente de historias y fórmulas).
 * `POST /cita/guardar`: Registrar nueva cita (valida solapamiento 15 min, fechas pasadas, pertenencia mascota-cliente).
-* `POST /cita/actualizar`: Modificar cita existente (restringido según estado).
+* `PUT /cita/actualizar`: Modificar cita existente (restringido según estado).
+* `PATCH /cita/cancelar?citaId={id}`: Cancelar una cita de forma explícita.
 
 ### 👨‍⚕️ Médicos Veterinarios (`/clinica/v1/medico`)
 * `GET /medico/listar-todos`: Obtiene el listado completo de veterinarios activos.
 
 ### 👤 Clientes (`/clinica/v1/cliente`)
 * `GET /cliente/listar-todos`: Listar todos los clientes registrados.
+* `GET /cliente/consultar?clienteId={id}`: Consultar un cliente.
 
 ### 🐶 Mascotas (`/clinica/v1/mascota`)
 * `GET /mascota/listar-mascotas`: Listar todas las mascotas.
 * `GET /mascota/buscar-by-cliente?clienteId={id}`: Listar únicamente las mascotas de un cliente (combo dependiente).
+* `GET /mascota/consultar?mascotaId={id}`: Consultar una mascota.
 * `POST /mascota/guardar`: Registrar mascota.
-* `POST /mascota/actualizar`: Actualizar mascota.
+* `PUT /mascota/actualizar`: Actualizar mascota.
 
 ### 📑 Historias Clínicas (`/clinica/v1/historia-medica`)
-* `GET /historia-medica/listar?fechaInicial={iso}&fechaFinal={iso}`: Listar historias médicas (todas o por rango de fechas ISO), ordenadas descendente por fecha de creación.
-* `GET /historia-medica/consultar?historiaId={id}`: Consultar el detalle de una historia clínica específica por su identificador.
-* `POST /historia-medica/guardar`: Crear nueva historia clínica validando existencia de mascota, pertenencia al cliente y cita en estado `atendida`.
-* `POST /historia-medica/actualizar`: Modificar historia médica existente (reasignación de paciente validada).
-* `POST /historia-medica/eliminar?historiaId={id}`: Eliminar historia médica por ID.
+* `GET /historia-medica/listar?fechaInicial={iso}&fechaFinal={iso}`: Listar historias médicas (todas o por rango de fechas ISO), ordenadas descendente.
+* `GET /historia-medica/consultar?historiaId={id}`: Consultar el detalle de una historia clínica.
+* `POST /historia-medica/guardar`: Crear historia clínica (cliente, mascota, cita atendida, diagnóstico y observaciones). Valida pertenencia mascota-cliente, cita atendida de la misma mascota y que la cita no tenga ya otra historia.
+* `PUT /historia-medica/actualizar`: Modificar historia médica con las mismas reglas.
+* `DELETE /historia-medica/eliminar?historiaId={id}`: Eliminar historia médica, solo si no tiene anotaciones.
 
 ### 📝 Anotaciones de Historia (`/clinica/v1/anotacion-historia`)
-* `GET /anotacion-historia/listar?historiaId={id}`: Listar evoluciones de una historia médica, ordenadas de la más reciente a la más antigua.
-* `GET /anotacion-historia/consultar?anotacionId={id}`: Consultar detalle de una anotación puntual por su ID.
-* `POST /anotacion-historia/guardar`: Registrar nueva evolución clínica con médico responsable y fecha/hora automática.
-* `POST /anotacion-historia/actualizar`: Actualizar descripción, historia o médico de una anotación existente.
+* `GET /anotacion-historia/listar?historiaId={id}`: Listar anotaciones de una historia médica, de la más reciente a la más antigua.
+* `GET /anotacion-historia/consultar?anotacionId={id}`: Consultar detalle de una anotación.
+* `POST /anotacion-historia/guardar`: Registrar anotación (veterinario, descripción, observación, diagnóstico/evolución; fecha y hora automática).
+* `PUT /anotacion-historia/actualizar`: Actualizar una anotación existente.
 
 ### 💊 Fórmulas Médicas (`/clinica/v1/formula-medica`)
 * `GET /formula-medica/listar`: Listar fórmulas médicas emitidas (más reciente primero).
 * `GET /formula-medica/consultar?formulaId={id}`: Consultar el detalle completo de una fórmula.
-* `GET /formula-medica/citas-disponibles?mascotaId={id}`: Citas atendidas de una mascota (combo dependiente del formulario).
-* `POST /formula-medica/guardar`: Registrar fórmula (valida cita atendida de la misma mascota, medicamento vigente, dosis/frecuencia/duración y fecha de emisión ≥ fecha de la consulta).
-* `POST /formula-medica/actualizar`: Actualizar fórmula con las mismas reglas. No existe eliminación física: la fórmula hace parte del historial clínico.
+* `POST /formula-medica/guardar`: Registrar fórmula (valida mascota existente con cliente, cita atendida de la misma mascota con veterinario, medicamento vigente, dosis/frecuencia/duración y fecha de emisión ≥ fecha de la consulta).
+* `PUT /formula-medica/actualizar`: Actualizar fórmula con las mismas reglas. No existe eliminación física: la fórmula hace parte del historial clínico.
 * `GET /medicamento/listar-todos`: Listar catálogo de medicamentos disponibles.
+
+### 🗄️ Base de datos
+* `schema.sql`: script completo (DDL + datos de prueba) para una instalación nueva.
+* `migracion_parcial.sql`: agrega las columnas nuevas de `formula_medica`, `historia_medica` y `anotacion_historia` en una base creada con la versión anterior.
 
 ---
 
 ## 🏗️ 4. Arquitectura y Buenas Prácticas
 
 El proyecto sigue una arquitectura en capas limpia con estricta separación de responsabilidades:
-1. **`api/`**: Interfaces con los contratos REST (`@GetMapping`, `@PostMapping`, `@RequestMapping`, `@CrossOrigin`).
+1. **`api/`**: Interfaces con los contratos REST (`@GetMapping`, `@PostMapping`, `@PutMapping`, `@PatchMapping`, `@DeleteMapping`, `@RequestMapping`, `@CrossOrigin`).
 2. **`apicontroller/`**: Controladores `@RestController` que delegan directamente al servicio.
 3. **`service/`**: Interfaces que declaran la lógica de negocio.
 4. **`serviceimpl/`**: Implementaciones `@Service` con validaciones rigurosas y reglas de negocio.

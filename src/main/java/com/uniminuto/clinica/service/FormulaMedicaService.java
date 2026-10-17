@@ -1,6 +1,5 @@
 package com.uniminuto.clinica.service;
 
-import com.uniminuto.clinica.entity.Cita;
 import com.uniminuto.clinica.entity.FormulaMedica;
 import com.uniminuto.clinica.exception.BadRequestException;
 import com.uniminuto.clinica.models.FormulaMedicaRq;
@@ -32,18 +31,8 @@ public interface FormulaMedicaService {
     FormulaMedica consultarFormulaMedica(Long formulaId) throws BadRequestException;
 
     /**
-     * Lista las citas atendidas de una mascota, sobre las cuales se puede emitir
-     * una fórmula médica.
-     *
-     * @param mascotaId identificador de la mascota.
-     * @return citas atendidas de la mascota, de la más reciente a la más antigua.
-     * @throws BadRequestException si el identificador de la mascota es inválido.
-     */
-    List<Cita> listarCitasDisponibles(Integer mascotaId) throws BadRequestException;
-
-    /**
-     * Registra una nueva fórmula médica, validando que la cita exista, corresponda
-     * a la mascota, esté atendida, que el medicamento esté vigente y que la dosis,
+     * Registra una nueva fórmula médica, validando que la mascota exista y pertenezca
+     * a un cliente registrado, que la cita exista, corresponda a la mascota, esté atendida, que el medicamento esté vigente y que la dosis,
      * frecuencia, duración y fecha de emisión sean válidas.
      *
      * @param formulaMedicaRq datos de la fórmula médica a registrar.

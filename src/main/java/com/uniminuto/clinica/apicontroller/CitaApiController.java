@@ -46,6 +46,14 @@ public class CitaApiController implements CitaApi {
      * {@inheritDoc}
      */
     @Override
+    public ResponseEntity<List<Cita>> listarCitasAtendidasPorMascota(Integer mascotaId) throws BadRequestException {
+        return ResponseEntity.ok(this.citaService.listarCitasAtendidasPorMascota(mascotaId));
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
     public ResponseEntity<MiRespuestaRS> guardarCita(CitaRq citaRq) throws BadRequestException {
         return ResponseEntity.ok(this.citaService.guardarCita(citaRq));
     }

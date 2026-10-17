@@ -10,14 +10,31 @@ import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
 
+/**
+ * Implementación REST de {@link ClienteApi}, delega la lógica de negocio en {@link ClienteService}.
+ */
 @RestController
 public class ClienteApiController implements ClienteApi {
 
+    /**
+     * Servicio de negocio para operaciones sobre clientes.
+     */
     @Autowired
     private ClienteService clienteService;
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public ResponseEntity<List<Cliente>> listarClientes() throws BadRequestException {
         return ResponseEntity.ok(this.clienteService.obtenerClientes());
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public ResponseEntity<Cliente> consultarCliente(Long clienteId) throws BadRequestException {
+        return ResponseEntity.ok(this.clienteService.consultarCliente(clienteId));
     }
 }
