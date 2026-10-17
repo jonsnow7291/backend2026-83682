@@ -50,10 +50,28 @@ public class FormulaMedica {
     private String dosis;
 
     /**
+     * Frecuencia de administración del medicamento (ej. "Cada 8 horas").
+     */
+    @Column(name = "frecuencia", nullable = false, length = 100)
+    private String frecuencia;
+
+    /**
+     * Duración del tratamiento expresada en días.
+     */
+    @Column(name = "duracion_dias", nullable = false)
+    private Integer duracionDias;
+
+    /**
      * Indicaciones adicionales para la administración del medicamento.
      */
     @Column(name = "indicaciones", columnDefinition = "TEXT")
     private String indicaciones;
+
+    /**
+     * Fecha y hora de emisión de la fórmula. Nunca es anterior a la fecha de la cita.
+     */
+    @Column(name = "fecha_emision", nullable = false)
+    private LocalDateTime fechaEmision;
 
     /**
      * Fecha de creación de la fórmula médica.

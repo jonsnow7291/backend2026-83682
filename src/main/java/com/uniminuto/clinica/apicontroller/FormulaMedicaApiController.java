@@ -1,8 +1,11 @@
 package com.uniminuto.clinica.apicontroller;
 
 import com.uniminuto.clinica.api.FormulaMedicaApi;
+import com.uniminuto.clinica.entity.Cita;
 import com.uniminuto.clinica.entity.FormulaMedica;
 import com.uniminuto.clinica.exception.BadRequestException;
+import com.uniminuto.clinica.models.FormulaMedicaRq;
+import com.uniminuto.clinica.models.MiRespuestaRS;
 import com.uniminuto.clinica.service.FormulaMedicaService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -29,5 +32,39 @@ public class FormulaMedicaApiController implements FormulaMedicaApi {
     @Override
     public ResponseEntity<List<FormulaMedica>> listarFormulasMedicas() throws BadRequestException {
         return ResponseEntity.ok(this.formulaMedicaService.listarFormulasMedicas());
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public ResponseEntity<FormulaMedica> consultarFormulaMedica(Long formulaId) throws BadRequestException {
+        return ResponseEntity.ok(this.formulaMedicaService.consultarFormulaMedica(formulaId));
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public ResponseEntity<List<Cita>> listarCitasDisponibles(Integer mascotaId) throws BadRequestException {
+        return ResponseEntity.ok(this.formulaMedicaService.listarCitasDisponibles(mascotaId));
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public ResponseEntity<MiRespuestaRS> guardarFormulaMedica(FormulaMedicaRq formulaMedicaRq)
+            throws BadRequestException {
+        return ResponseEntity.ok(this.formulaMedicaService.guardarFormulaMedica(formulaMedicaRq));
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public ResponseEntity<MiRespuestaRS> actualizarFormulaMedica(FormulaMedicaRq formulaMedicaRq)
+            throws BadRequestException {
+        return ResponseEntity.ok(this.formulaMedicaService.actualizarFormulaMedica(formulaMedicaRq));
     }
 }

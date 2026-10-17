@@ -130,7 +130,11 @@ El servidor iniciará en:
 * `POST /anotacion-historia/actualizar`: Actualizar descripción, historia o médico de una anotación existente.
 
 ### 💊 Fórmulas Médicas (`/clinica/v1/formula-medica`)
-* `GET /formula-medica/listar`: Listar fórmulas médicas emitidas.
+* `GET /formula-medica/listar`: Listar fórmulas médicas emitidas (más reciente primero).
+* `GET /formula-medica/consultar?formulaId={id}`: Consultar el detalle completo de una fórmula.
+* `GET /formula-medica/citas-disponibles?mascotaId={id}`: Citas atendidas de una mascota (combo dependiente del formulario).
+* `POST /formula-medica/guardar`: Registrar fórmula (valida cita atendida de la misma mascota, medicamento vigente, dosis/frecuencia/duración y fecha de emisión ≥ fecha de la consulta).
+* `POST /formula-medica/actualizar`: Actualizar fórmula con las mismas reglas. No existe eliminación física: la fórmula hace parte del historial clínico.
 * `GET /medicamento/listar-todos`: Listar catálogo de medicamentos disponibles.
 
 ---

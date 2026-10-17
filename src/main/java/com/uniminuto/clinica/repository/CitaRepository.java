@@ -51,4 +51,15 @@ public interface CitaRepository extends JpaRepository<Cita, Long> {
      * @return lista de citas de la mascota en dicha fecha y hora.
      */
     List<Cita> findAllByMascota_MascotaIdAndFechaHora(Integer mascotaId, LocalDateTime fechaHora);
+
+    /**
+     * Busca las citas de una mascota con el estado indicado (sin distinguir mayúsculas),
+     * ordenadas de la más reciente a la más antigua. Utilizado para ofrecer las citas
+     * atendidas sobre las que se puede emitir una fórmula médica.
+     *
+     * @param mascotaId identificador de la mascota.
+     * @param estado    estado de la cita (ej. {@code atendida}).
+     * @return lista de citas de la mascota en el estado indicado.
+     */
+    List<Cita> findAllByMascota_MascotaIdAndEstadoIgnoreCaseOrderByFechaHoraDesc(Integer mascotaId, String estado);
 }

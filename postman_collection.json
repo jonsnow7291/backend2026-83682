@@ -235,8 +235,137 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/formula-medica/listar",
-              "host": ["{{baseUrl}}"],
-              "path": ["formula-medica", "listar"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "formula-medica",
+                "listar"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Consultar formula medica",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/formula-medica/consultar?formulaId=1",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "formula-medica",
+                "consultar"
+              ],
+              "query": [
+                {
+                  "key": "formulaId",
+                  "value": "1"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Citas disponibles de una mascota",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/formula-medica/citas-disponibles?mascotaId=1",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "formula-medica",
+                "citas-disponibles"
+              ],
+              "query": [
+                {
+                  "key": "mascotaId",
+                  "value": "1"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Guardar formula medica",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"mascotaId\": 1,\n  \"citaId\": 1,\n  \"medicamentoId\": 1,\n  \"dosis\": \"5 ml\",\n  \"frecuencia\": \"Cada 8 horas\",\n  \"duracionDias\": 7,\n  \"indicaciones\": \"Administrar con comida\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/formula-medica/guardar",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "formula-medica",
+                "guardar"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Actualizar formula medica",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"formulaId\": 1,\n  \"mascotaId\": 1,\n  \"citaId\": 1,\n  \"medicamentoId\": 1,\n  \"dosis\": \"5 ml\",\n  \"frecuencia\": \"Cada 8 horas\",\n  \"duracionDias\": 10,\n  \"indicaciones\": \"Administrar con comida\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/formula-medica/actualizar",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "formula-medica",
+                "actualizar"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Guardar formula - error duracion invalida (400)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"mascotaId\": 1,\n  \"citaId\": 1,\n  \"medicamentoId\": 1,\n  \"dosis\": \"5 ml\",\n  \"frecuencia\": \"Cada 8 horas\",\n  \"duracionDias\": 0,\n  \"indicaciones\": \"Administrar con comida\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/formula-medica/guardar",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "formula-medica",
+                "guardar"
+              ]
             }
           }
         }
