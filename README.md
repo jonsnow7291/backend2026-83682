@@ -25,15 +25,32 @@ A continuación se detallan las reglas de negocio exigidas en el documento ofici
 
 ---
 
-### 📋 Módulo de Historias Clínicas y Anotaciones (Sección 3 del Parcial)
+### 📋 Módulo de Historias Clínicas y Anotaciones (Sección 3 del Parcial - Integrante 2 / Camilo)
 
-| # | Regla de Negocio | Descripción y Criterio de Validación |
-| :-: | :--- | :--- |
-| **RN-HIS-01** | **Asociación de Historia** | La historia clínica debe asociarse a una mascota existente y validar que pertenezca al cliente. |
-| **RN-HIS-02** | **Vínculo con Cita Atendida** | La historia clínica o consulta debe derivarse de una cita previamente marcada como `Atendida`. |
-| **RN-HIS-03** | **Múltiples Anotaciones** | Una historia clínica puede contener múltiples anotaciones a lo largo del tiempo que reflejen la evolución clínica. |
-| **RN-HIS-04** | **Orden Cronológico Descendente** | El histórico de anotaciones debe listarse y presentarse siempre desde **la más reciente hasta la más antigua**. |
-| **RN-HIS-05** | **Datos Mínimos de Anotación** | Toda anotación exige fecha/hora, veterinario responsable, descripción clínica, observación y diagnóstico o evolución. |
+A continuación se detallan las reglas de negocio implementadas en el commit de Historias Clínicas y Anotaciones (`c68343f`), con validaciones a nivel de base de datos, DTO y servicios de negocio:
+
+#### 🐾 Historias Médicas (`HistoriaMedicaServiceImpl`)
+
+| # | Regla de Negocio | Descripción y Criterio de Validación | Excepción / Respuesta |
+| :-: | :--- | :--- | :--- |
+| **RN-HIS-01** | **Existencia de Mascota** | La historia clínica debe asociarse a una mascota existente en el sistema. El identificador `mascotaId` es obligatorio y debe ser mayor a cero. | `BadRequestException`: *"El id de la mascota no puede ser nulo o negativo"* / *"La mascota seleccionada no es valida"* (HTTP 400). |
+| **RN-HIS-02** | **Pertenencia Mascota - Cliente** | Cuando se proporciona `clienteId` (procedente del selector dependiente), se valida que el cliente exista y que la mascota seleccionada **pertenezca obligatoriamente** a dicho cliente (`mascota.cliente.clienteId == clienteId`). Previene la alteración cruzada de historias entre clientes. | `BadRequestException`: *"La mascota seleccionada no pertenece al cliente indicado"* (HTTP 400). |
+| **RN-HIS-03** | **Vínculo Estricto con Cita Atendida** | Cuando se crea una historia clínica asociada a una cita (`citaId`), el sistema valida tres condiciones: <br>1. La cita debe existir en el sistema.<br>2. La cita debe corresponder a la misma mascota indicada (`cita.mascota.mascotaId == mascota.mascotaId`).<br>3. La cita debe encontrarse en estado estrictamente **`atendida`** (`cita.estado.equalsIgnoreCase("atendida")`). Citas pendientes, canceladas o programadas no permiten abrir historia. | `BadRequestException`: *"La cita seleccionada no corresponde a la mascota indicada"* / *"La cita asociada debe estar en estado atendida"* (HTTP 400). |
+| **RN-HIS-04** | **Validación de Rango de Fechas** | En el listado de historias médicas (`/historia-medica/listar`), los parámetros `fechaInicial` y `fechaFinal` son opcionales pero acoplados: si se envía uno, deben enviarse ambos. Además, `fechaInicial` no puede ser posterior a `fechaFinal`. | `BadRequestException`: *"Debe proporcionar tanto la fecha inicial como la fecha final, o ninguna"* / *"La fecha inicial no puede ser posterior a la fecha final"* (HTTP 400). |
+| **RN-HIS-05** | **Orden Cronológico Inverso por Defecto** | Las historias clínicas se listan ordenadas cronológicamente de forma descendente por `fechaCreacion DESC`, de la más reciente a la más antigua. | Consulta JPA derivada: `findAllByOrderByFechaCreacionDesc()`. |
+| **RN-HIS-06** | **Integridad en Actualización y Eliminación** | Toda operación de actualización (`/actualizar`), consulta (`/consultar`) o eliminación (`/eliminar`) exige un `historiaId` válido y existente. No se permite operar sobre historias inexistentes. | `BadRequestException`: *"El id de la historia medica no puede ser nulo o negativo"* / *"La historia medica seleccionada no es valida"* (HTTP 400). |
+| **RN-HIS-07** | **Asignación Automática de Marca Temporal** | La fecha de apertura de la historia clínica se asigna automáticamente en el backend con la fecha/hora del servidor (`LocalDateTime.now()`), impidiendo manipulación manual de fechas de apertura. | Generación automática en `guardarHistoriaMedica`. |
+
+#### 📝 Anotaciones de Historia (`AnotacionHistoriaServiceImpl`)
+
+| # | Regla de Negocio | Descripción y Criterio de Validación | Excepción / Respuesta |
+| :-: | :--- | :--- | :--- |
+| **RN-ANO-01** | **Asociación a Historia Médica Válida** | Toda anotación o evolución clínica debe asociarse obligatoriamente a una historia médica existente (`historiaId > 0`). | `BadRequestException`: *"El id de la historia medica no puede ser nulo o negativo"* / *"La historia medica seleccionada no es valida"* (HTTP 400). |
+| **RN-ANO-02** | **Existencia de Médico Veterinario Responsable** | Toda anotación exige la identificación de un médico veterinario responsable (`medicoId > 0`), validando su existencia en la base de datos antes de registrar o modificar la nota. | `BadRequestException`: *"El id del medico no puede ser nulo o negativo"* / *"El medico seleccionado no es valido"* (HTTP 400). |
+| **RN-ANO-03** | **Obligatoriedad de la Descripción Clínica** | La descripción de la evolución, diagnóstico u observación médica es un campo obligatorio y no puede ser nulo ni estar vacío. | `BadRequestException`: *"La descripcion de la anotacion no puede ser nula o vacía"* (HTTP 400). |
+| **RN-ANO-04** | **Secuencia Cronológica Descendente de Notas** | El listado de anotaciones de un paciente (`/anotacion-historia/listar`) se entrega ordenado cronológicamente de forma descendente por `fecha DESC` (de la más reciente a la más antigua), permitiendo al profesional ver de inmediato la última evolución médica registrada. | Consulta JPA: `findAllByHistoriaMedicaOrderByFechaDesc()`. |
+| **RN-ANO-05** | **Estampa de Tiempo Inmutable en Registro** | Al crear una nueva anotación, la fecha y hora de la nota se captura automáticamente del servidor (`LocalDateTime.now()`), garantizando trazabilidad cronológica fidedigna. | Generación automática en `guardarAnotacionHistoria`. |
+| **RN-ANO-06** | **Consulta Detallada y Modificación Controlada** | Cada anotación individual puede consultarse puntualmente por su identificador (`/anotacion-historia/consultar`) y actualizarse validando que la nota, la historia y el médico existan. | `BadRequestException`: *"La anotacion seleccionada no es valida"* (HTTP 400). |
 
 ---
 
@@ -100,15 +117,17 @@ El servidor iniciará en:
 * `POST /mascota/actualizar`: Actualizar mascota.
 
 ### 📑 Historias Clínicas (`/clinica/v1/historia-medica`)
-* `GET /historia-medica/listar`: Listar historias médicas.
-* `POST /historia-medica/guardar`: Crear nueva historia clínica asociada a cita atendida.
-* `POST /historia-medica/actualizar`: Modificar historia médica.
-* `POST /historia-medica/eliminar?historiaId={id}`: Eliminar historia médica.
+* `GET /historia-medica/listar?fechaInicial={iso}&fechaFinal={iso}`: Listar historias médicas (todas o por rango de fechas ISO), ordenadas descendente por fecha de creación.
+* `GET /historia-medica/consultar?historiaId={id}`: Consultar el detalle de una historia clínica específica por su identificador.
+* `POST /historia-medica/guardar`: Crear nueva historia clínica validando existencia de mascota, pertenencia al cliente y cita en estado `atendida`.
+* `POST /historia-medica/actualizar`: Modificar historia médica existente (reasignación de paciente validada).
+* `POST /historia-medica/eliminar?historiaId={id}`: Eliminar historia médica por ID.
 
 ### 📝 Anotaciones de Historia (`/clinica/v1/anotacion-historia`)
-* `GET /anotacion-historia/listar?historiaId={id}`: Listar anotaciones de una historia médica (reciente a antigua).
-* `POST /anotacion-historia/guardar`: Registrar anotación de evolución clínica.
-* `POST /anotacion-historia/actualizar`: Actualizar anotación.
+* `GET /anotacion-historia/listar?historiaId={id}`: Listar evoluciones de una historia médica, ordenadas de la más reciente a la más antigua.
+* `GET /anotacion-historia/consultar?anotacionId={id}`: Consultar detalle de una anotación puntual por su ID.
+* `POST /anotacion-historia/guardar`: Registrar nueva evolución clínica con médico responsable y fecha/hora automática.
+* `POST /anotacion-historia/actualizar`: Actualizar descripción, historia o médico de una anotación existente.
 
 ### 💊 Fórmulas Médicas (`/clinica/v1/formula-medica`)
 * `GET /formula-medica/listar`: Listar fórmulas médicas emitidas.
