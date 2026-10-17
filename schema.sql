@@ -2,6 +2,8 @@
 -- SCRIPT DDL Y DATOS INICIALES - CLÍNICA VETERINARIA
 -- ==========================================================
 
+SET NAMES utf8mb4;
+
 CREATE DATABASE IF NOT EXISTS clinica CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 USE clinica;
 
@@ -170,3 +172,12 @@ ON DUPLICATE KEY UPDATE numero_documento=numero_documento;
 INSERT INTO medicamento (id, nombre, descripcion, presentacion, fecha_compra, fecha_vence, fecha_creacion_registro)
 VALUES (1, 'Amoxicilina 250mg', 'Antibiótico de amplio espectro', 'Frasco 60ml suspensión', CURDATE(), DATE_ADD(CURDATE(), INTERVAL 1 YEAR), NOW())
 ON DUPLICATE KEY UPDATE nombre=nombre;
+
+-- Citas ya atendidas (en el pasado) para probar historias clínicas y fórmulas médicas.
+-- La API no permite crear citas en fechas pasadas, por eso se cargan aquí.
+INSERT INTO cita (id, cliente_id, mascota_id, medico_id, fecha_hora, estado, motivo)
+VALUES
+(1, 1, 1, 1, NOW() - INTERVAL 2 DAY, 'Atendida', 'Control de vacunas'),
+(2, 1, 2, 2, NOW() - INTERVAL 1 DAY, 'Atendida', 'Dolor de oído'),
+(3, 2, 3, 3, NOW() - INTERVAL 3 HOUR, 'Atendida', 'Revisión general')
+ON DUPLICATE KEY UPDATE motivo=motivo;
