@@ -12,29 +12,47 @@ import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
 
+/**
+ * Implementación REST de {@link MascotaApi}, delega la lógica de negocio en {@link MascotaService}.
+ */
 @RestController
 public class MascotaApiController implements MascotaApi {
 
+    /**
+     * Servicio de negocio para operaciones sobre mascotas.
+     */
     @Autowired
     private MascotaService mascotaService;
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public ResponseEntity<List<Mascota>> listarMascotas() throws BadRequestException {
         return ResponseEntity.ok(this.mascotaService.listarMascotas());
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public ResponseEntity<List<Mascota>> listarMascotas(boolean ascendente) throws BadRequestException {
         return ResponseEntity.ok(this.mascotaService
                 .listarMascotasOrdenado(ascendente));
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public ResponseEntity<List<Mascota>> buscarPorRaza(Integer razaId) throws BadRequestException {
         return ResponseEntity.ok(this.mascotaService
                 .listarMascotasPorRaza(razaId));
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public ResponseEntity<List<Mascota>> buscarPorCliente(Long clienteId) throws BadRequestException {
         return ResponseEntity.ok(this.mascotaService
@@ -49,11 +67,17 @@ public class MascotaApiController implements MascotaApi {
         return ResponseEntity.ok(this.mascotaService.consultarMascota(mascotaId));
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public ResponseEntity<MiRespuestaRS> guardarMascota(MascotaRq mascotaRq) throws BadRequestException {
         return ResponseEntity.ok(this.mascotaService.guardarMascota(mascotaRq));
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public ResponseEntity<MiRespuestaRS> actualizarMascota(MascotaRq mascotaRq) throws BadRequestException {
         return ResponseEntity.ok(this.mascotaService.actualizarMascota(mascotaRq));

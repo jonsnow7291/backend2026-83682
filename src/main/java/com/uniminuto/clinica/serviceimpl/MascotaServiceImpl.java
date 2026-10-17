@@ -18,18 +18,33 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
 
+/**
+ * Implementación de {@link MascotaService} usando Spring Data JPA.
+ */
 @Service
 public class MascotaServiceImpl implements MascotaService {
 
-   @Autowired
-   private MascotaRepository mascotaRepository;
+    /**
+     * Repositorio JPA para el acceso a datos de mascotas.
+     */
+    @Autowired
+    private MascotaRepository mascotaRepository;
 
-   @Autowired
-   private RazaRepository razaRepository;
+    /**
+     * Repositorio JPA para validar la raza de la mascota.
+     */
+    @Autowired
+    private RazaRepository razaRepository;
 
-   @Autowired
-   private ClienteRepository clienteRepository;
+    /**
+     * Repositorio JPA para validar el cliente propietario.
+     */
+    @Autowired
+    private ClienteRepository clienteRepository;
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public List<Mascota> listarMascotas() throws BadRequestException {
         return mascotaRepository.findAll();
@@ -47,6 +62,9 @@ public class MascotaServiceImpl implements MascotaService {
                 .orElseThrow(() -> new BadRequestException("La mascota seleccionada no existe"));
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public List<Mascota> listarMascotasOrdenado(boolean ascendente) throws BadRequestException {
         List<Mascota> mascotas = mascotaRepository.findAll();
@@ -63,6 +81,9 @@ public class MascotaServiceImpl implements MascotaService {
         return mascotas;
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public List<Mascota> listarMascotasPorRaza(Integer idRaza) throws BadRequestException {
         // Paso 1. Valido que idRaza no sea nulo o negativo
@@ -81,6 +102,9 @@ public class MascotaServiceImpl implements MascotaService {
 
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public List<Mascota> listarMascotasPorCliente(Long idCliente) throws BadRequestException {
         //Paso 1. Valido que idCliente no sea nulo o negativo
@@ -98,6 +122,9 @@ public class MascotaServiceImpl implements MascotaService {
         return this.mascotaRepository.findAllByCliente(optCliente.get());
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public MiRespuestaRS guardarMascota(MascotaRq mascotaRq) throws BadRequestException {
         //Paso 1. Validar el objeto de entrada
@@ -131,6 +158,9 @@ public class MascotaServiceImpl implements MascotaService {
         return respuesta;
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public MiRespuestaRS actualizarMascota(MascotaRq mascotaRq) throws BadRequestException {
         //Paso 1. Validar el objeto de entrada
@@ -159,7 +189,7 @@ public class MascotaServiceImpl implements MascotaService {
         mascotaExistente.setEdad(mascotaRq.getEdad());
         mascotaExistente.setRaza(optRaza.get());
         mascotaExistente.setCliente(optCliente.get());
-        mascotaExistente.setFechaRegistro(LocalDateTime.now());
+        mascotaExistente.setFechaModificacion(LocalDateTime.now());
 
         this.mascotaRepository.save(mascotaExistente);
 
@@ -171,6 +201,12 @@ public class MascotaServiceImpl implements MascotaService {
         return respuesta;
     }
 
+    /**
+     * Valida que los datos de entrada de una mascota sean correctos.
+     *
+     * @param mascotaRq datos a validar.
+     * @throws BadRequestException si algún dato es nulo, vacío o inválido.
+     */
     private void validarMascotaRq(MascotaRq mascotaRq) throws BadRequestException {
         if (mascotaRq == null) {
             throw new BadRequestException("El objeto MascotaRq no puede ser nulo");

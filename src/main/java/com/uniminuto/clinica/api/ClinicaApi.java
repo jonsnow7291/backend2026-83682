@@ -7,6 +7,9 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import com.uniminuto.clinica.exception.BadRequestException;
 
+/**
+ * Contrato REST de diagnóstico: endpoints de prueba para verificar que el servicio responde.
+ */
 @CrossOrigin(origins = "*", allowedHeaders = "*")
 @RequestMapping("/clinica")
 public interface ClinicaApi {
