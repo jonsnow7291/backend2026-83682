@@ -2,367 +2,449 @@ package com.uniminuto.clinica.serviceimpl;
 
 import com.uniminuto.clinica.entity.Cita;
 import com.uniminuto.clinica.entity.Cliente;
+import com.uniminuto.clinica.entity.HorarioVeterinario;
 import com.uniminuto.clinica.entity.Mascota;
 import com.uniminuto.clinica.entity.Medico;
 import com.uniminuto.clinica.exception.BadRequestException;
+import com.uniminuto.clinica.exception.ConflictException;
+import com.uniminuto.clinica.exception.NotFoundException;
+import com.uniminuto.clinica.models.CitaCalendarioRs;
 import com.uniminuto.clinica.models.CitaRq;
 import com.uniminuto.clinica.models.MiRespuestaRS;
+import com.uniminuto.clinica.models.ReprogramarRq;
 import com.uniminuto.clinica.repository.CitaRepository;
 import com.uniminuto.clinica.repository.ClienteRepository;
+import com.uniminuto.clinica.repository.HorarioRepository;
 import com.uniminuto.clinica.repository.MascotaRepository;
 import com.uniminuto.clinica.repository.MedicoRepository;
+import com.uniminuto.clinica.security.Roles;
+import com.uniminuto.clinica.security.UsuarioActual;
 import com.uniminuto.clinica.service.CitaService;
+import com.uniminuto.clinica.util.CitaEstados;
+import com.uniminuto.clinica.util.ExcelUtil;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
-import java.util.Arrays;
+import java.time.LocalTime;
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Optional;
+import java.util.Map;
 
 /**
- * Implementación de {@link CitaService} que centraliza la lógica y las reglas de negocio
- * para la gestión de citas médicas de la clínica veterinaria.
+ * Implementación de la agenda de citas. Reglas de negocio (RN) validadas aquí:
+ * RN1 el veterinario no tiene citas solapadas; RN2 la mascota no tiene citas simultáneas;
+ * RN3 no se asignan citas a médicos inactivos; RN4 la cita debe caer dentro del horario del
+ * veterinario; RN5 las canceladas conservan historial; RN6 la mascota pertenece al propietario;
+ * RN7 un MEDICO solo ve y gestiona sus citas.
  */
 @Service
 public class CitaServiceImpl implements CitaService {
 
-    /**
-     * Lista de estados válidos permitidos para una cita según la regla RN-CIT-07.
-     */
-    private static final List<String> ESTADOS_PERMITIDOS = Arrays.asList(
-            "Pendiente", "Programada", "Confirmada", "Atendida", "Cancelada"
-    );
+    private static final int DURACION_DEFECTO = 30;
 
-    /**
-     * Repositorio JPA para el acceso a datos de citas.
-     */
     @Autowired
     private CitaRepository citaRepository;
 
-    /**
-     * Repositorio JPA para validar y obtener clientes.
-     */
     @Autowired
     private ClienteRepository clienteRepository;
 
-    /**
-     * Repositorio JPA para validar y obtener mascotas.
-     */
     @Autowired
     private MascotaRepository mascotaRepository;
 
-    /**
-     * Repositorio JPA para validar y obtener médicos veterinarios.
-     */
     @Autowired
     private MedicoRepository medicoRepository;
 
-    /**
-     * {@inheritDoc}
-     */
+    @Autowired
+    private HorarioRepository horarioRepository;
+
+    @Autowired
+    private UsuarioActual usuarioActual;
+
+    /** {@inheritDoc} */
     @Override
-    public List<Cita> listarCitasPorFecha(LocalDateTime fechaInicial, LocalDateTime fechaFinal)
-            throws BadRequestException {
-        // Si no se especifican fechas, se listan todas las citas ordenadas descendentemente por fecha
+    public List<Cita> listarCitasPorFecha(LocalDateTime fechaInicial, LocalDateTime fechaFinal) throws BadRequestException {
+        List<Cita> citas;
         if (fechaInicial == null && fechaFinal == null) {
-            return this.citaRepository.findAllByOrderByFechaHoraDesc();
+            citas = citaRepository.findAllByOrderByFechaHoraDesc();
+        } else {
+            if (fechaInicial == null || fechaFinal == null) {
+                throw new BadRequestException("Debe proporcionar tanto la fecha inicial como la final para filtrar por rango.");
+            }
+            if (fechaInicial.isAfter(fechaFinal)) {
+                throw new BadRequestException("La fecha inicial no puede ser posterior a la fecha final.");
+            }
+            citas = citaRepository.findAllByFechaHoraBetweenOrderByFechaHoraDesc(fechaInicial, fechaFinal);
         }
-
-        if (fechaInicial == null || fechaFinal == null) {
-            throw new BadRequestException("Debe proporcionar tanto la fecha inicial como la final para filtrar por rango.");
-        }
-
-        if (fechaInicial.isAfter(fechaFinal)) {
-            throw new BadRequestException("La fecha inicial no puede ser posterior a la fecha final.");
-        }
-
-        return this.citaRepository.findAllByFechaHoraBetweenOrderByFechaHoraDesc(fechaInicial, fechaFinal);
+        Long propio = medicoRestringido();
+        return propio == null ? citas : citas.stream().filter(c -> c.getMedico().getId().equals(propio)).toList();
     }
 
-    /**
-     * {@inheritDoc}
-     */
+    /** {@inheritDoc} */
     @Override
     public Cita consultarCita(Long citaId) throws BadRequestException {
         if (citaId == null || citaId <= 0) {
             throw new BadRequestException("El identificador de la cita no puede ser nulo o menor o igual a cero.");
         }
-        return this.citaRepository.findById(citaId)
-                .orElseThrow(() -> new BadRequestException("La cita médica con id " + citaId + " no existe."));
+        Cita c = citaRepository.findById(citaId)
+                .orElseThrow(() -> new NotFoundException("La cita médica con id " + citaId + " no existe."));
+        usuarioActualExigirPropia(c);
+        return c;
     }
 
-    /**
-     * {@inheritDoc}
-     */
+    /** {@inheritDoc} */
     @Override
     public List<Cita> listarCitasAtendidasPorMascota(Integer mascotaId) throws BadRequestException {
         if (mascotaId == null || mascotaId <= 0) {
             throw new BadRequestException("El identificador de la mascota no puede ser nulo o menor o igual a cero.");
         }
-        Mascota mascota = this.obtenerMascotaValida(mascotaId);
-        return this.citaRepository.findAllByMascota_MascotaIdAndEstadoIgnoreCaseOrderByFechaHoraDesc(
-                mascota.getMascotaId(), "atendida");
+        obtenerMascota(mascotaId);
+        return citaRepository.findAllByMascota_MascotaIdOrderByFechaHoraDesc(mascotaId).stream()
+                .filter(c -> CitaEstados.fueAtendida(c.getEstado())).toList();
     }
 
-    /**
-     * {@inheritDoc}
-     */
+    /** {@inheritDoc} */
     @Override
-    public MiRespuestaRS guardarCita(CitaRq citaRq) throws BadRequestException {
-        this.validarCitaRq(citaRq, true);
-
-        Cliente cliente = this.obtenerClienteValido(citaRq.getClienteId());
-        Mascota mascota = this.obtenerMascotaValida(citaRq.getMascotaId());
-        Medico medico = this.obtenerMedicoValido(citaRq.getMedicoId());
-
-        // RN-CIT-02: Validar que la mascota pertenezca al cliente seleccionado
-        this.validarPertenenciaMascotaCliente(mascota, cliente);
-
-        // RN-CIT-04: Validar no solapamiento del veterinario (+/- 15 minutos)
-        this.validarDisponibilidadMedico(medico.getId(), citaRq.getFechaHora(), null);
-
-        // RN-CIT-05: Validar que la mascota no tenga dos citas simultáneas
-        this.validarDisponibilidadMascota(mascota.getMascotaId(), citaRq.getFechaHora(), null);
-
+    @Transactional
+    public MiRespuestaRS guardarCita(CitaRq rq) throws BadRequestException {
+        validarRq(rq);
+        Cliente cliente = obtenerCliente(rq.getClienteId());
+        Mascota mascota = obtenerMascota(rq.getMascotaId());
+        Medico medico = obtenerMedico(rq.getMedicoId());
+        usuarioActualExigirMedico(medico.getId());
+        if (rq.getFechaHora().isBefore(LocalDateTime.now())) {
+            throw new BadRequestException("No se pueden registrar citas en fechas u horas anteriores a la actual.");
+        }
+        LocalDateTime fin = rq.getFechaHora().plusMinutes(duracion(rq.getDuracionMinutos(), DURACION_DEFECTO));
+        validarReglas(cliente, mascota, medico, rq.getFechaHora(), fin, null);
         Cita cita = new Cita();
         cita.setCliente(cliente);
         cita.setMascota(mascota);
         cita.setMedico(medico);
-        cita.setFechaHora(citaRq.getFechaHora());
-        cita.setEstado(this.normalizarEstado(citaRq.getEstado()));
-        cita.setMotivo(citaRq.getMotivo());
-
-        this.citaRepository.save(cita);
-
-        MiRespuestaRS respuesta = new MiRespuestaRS();
-        respuesta.setStatus(200);
-        respuesta.setMessage("Cita médica registrada exitosamente.");
-        return respuesta;
+        cita.setFechaHora(rq.getFechaHora());
+        cita.setFechaHoraFin(fin);
+        cita.setEstado(estadoInicial(rq.getEstado()));
+        cita.setMotivo(rq.getMotivo());
+        cita.setEspecializacionId(medico.getEspecializacionId().longValue());
+        citaRepository.save(cita);
+        return ok("Cita médica registrada exitosamente.");
     }
 
-    /**
-     * {@inheritDoc}
-     */
+    /** {@inheritDoc} */
     @Override
-    public MiRespuestaRS actualizarCita(CitaRq citaRq) throws BadRequestException {
-        this.validarCitaRq(citaRq, false);
-
-        if (citaRq.getCitaId() == null || citaRq.getCitaId() <= 0) {
+    @Transactional
+    public MiRespuestaRS actualizarCita(CitaRq rq) throws BadRequestException {
+        validarRq(rq);
+        if (rq.getCitaId() == null || rq.getCitaId() <= 0) {
             throw new BadRequestException("El identificador de la cita a actualizar es obligatorio.");
         }
-
-        Cita citaExistente = this.citaRepository.findById(citaRq.getCitaId())
-                .orElseThrow(() -> new BadRequestException("La cita a actualizar no existe."));
-
-        // RN-CIT-08: Una cita cancelada no puede ser modificada como si continuara activa
-        if ("Cancelada".equalsIgnoreCase(citaExistente.getEstado())) {
-            throw new BadRequestException("Una cita cancelada no puede ser modificada como si continuara activa.");
-        }
-
-        // RN-CIT-09: Una cita atendida no permite modificar arbitrariamente su información histórica
-        if ("Atendida".equalsIgnoreCase(citaExistente.getEstado())) {
-            boolean cambioCliente = !citaExistente.getCliente().getClienteId().equals(citaRq.getClienteId());
-            boolean cambioMascota = !citaExistente.getMascota().getMascotaId().equals(citaRq.getMascotaId());
-            boolean cambioMedico = !citaExistente.getMedico().getId().equals(citaRq.getMedicoId());
-            boolean cambioFecha = !citaExistente.getFechaHora().isEqual(citaRq.getFechaHora());
-
-            if (cambioCliente || cambioMascota || cambioMedico || cambioFecha) {
-                throw new BadRequestException("Una cita atendida no permite modificar su información histórica (cliente, mascota, médico o fecha/hora).");
+        Cita cita = citaRepository.bloquear(rq.getCitaId())
+                .orElseThrow(() -> new NotFoundException("La cita a actualizar no existe."));
+        usuarioActualExigirPropia(cita);
+        exigirEditable(cita);
+        Cliente cliente = obtenerCliente(rq.getClienteId());
+        Mascota mascota = obtenerMascota(rq.getMascotaId());
+        Medico medico = obtenerMedico(rq.getMedicoId());
+        usuarioActualExigirMedico(medico.getId());
+        LocalDateTime fin = rq.getFechaHora().plusMinutes(duracion(rq.getDuracionMinutos(), minutos(cita)));
+        validarReglas(cliente, mascota, medico, rq.getFechaHora(), fin, cita.getId());
+        cita.setCliente(cliente);
+        cita.setMascota(mascota);
+        cita.setMedico(medico);
+        cita.setFechaHora(rq.getFechaHora());
+        cita.setFechaHoraFin(fin);
+        cita.setMotivo(rq.getMotivo());
+        cita.setEspecializacionId(medico.getEspecializacionId().longValue());
+        if (rq.getEstado() != null && !rq.getEstado().isBlank()) {
+            String nuevo = rq.getEstado().trim().toUpperCase();
+            if (!CitaEstados.TODOS.contains(nuevo)) {
+                throw new BadRequestException("El estado '" + rq.getEstado() + "' no es válido. Estados permitidos: " + CitaEstados.TODOS);
             }
+            if (!nuevo.equals(cita.getEstado()) && !List.of(CitaEstados.PENDIENTE, CitaEstados.CONFIRMADA).contains(nuevo)) {
+                throw new BadRequestException("Use los servicios de cancelar o atender para cambiar a " + nuevo + ".");
+            }
+            cita.setEstado(nuevo);
         }
-
-        Cliente cliente = this.obtenerClienteValido(citaRq.getClienteId());
-        Mascota mascota = this.obtenerMascotaValida(citaRq.getMascotaId());
-        Medico medico = this.obtenerMedicoValido(citaRq.getMedicoId());
-
-        // RN-CIT-02: Validar que la mascota pertenezca al cliente
-        this.validarPertenenciaMascotaCliente(mascota, cliente);
-
-        // Si la cita no estaba atendida y se modificó la fecha/hora o médico, validar disponibilidad
-        if (!"Atendida".equalsIgnoreCase(citaExistente.getEstado())) {
-            this.validarDisponibilidadMedico(medico.getId(), citaRq.getFechaHora(), citaExistente.getId());
-            this.validarDisponibilidadMascota(mascota.getMascotaId(), citaRq.getFechaHora(), citaExistente.getId());
-        }
-
-        citaExistente.setCliente(cliente);
-        citaExistente.setMascota(mascota);
-        citaExistente.setMedico(medico);
-        citaExistente.setFechaHora(citaRq.getFechaHora());
-        citaExistente.setEstado(this.normalizarEstado(citaRq.getEstado()));
-        citaExistente.setMotivo(citaRq.getMotivo());
-
-        this.citaRepository.save(citaExistente);
-
-        MiRespuestaRS respuesta = new MiRespuestaRS();
-        respuesta.setStatus(200);
-        respuesta.setMessage("Cita médica actualizada exitosamente.");
-        return respuesta;
+        citaRepository.save(cita);
+        return ok("Cita médica actualizada exitosamente.");
     }
 
-    /**
-     * {@inheritDoc}
-     */
+    /** {@inheritDoc} */
     @Override
-    public MiRespuestaRS cancelarCita(Long citaId) throws BadRequestException {
+    @Transactional
+    public MiRespuestaRS cancelarCita(Long citaId, String motivo) throws BadRequestException {
+        Cita cita = cargar(citaId);
+        if (CitaEstados.CANCELADA.equals(cita.getEstado())) {
+            throw new BadRequestException("La cita ya se encuentra en estado Cancelada.");
+        }
+        if (CitaEstados.fueAtendida(cita.getEstado())) {
+            throw new BadRequestException("No es posible cancelar una cita que ya fue atendida.");
+        }
+        cita.setEstado(CitaEstados.CANCELADA);
+        cita.setMotivoCancelacion(motivo == null || motivo.isBlank() ? "Sin motivo registrado" : motivo.trim());
+        citaRepository.save(cita);
+        return ok("Cita cancelada exitosamente.");
+    }
+
+    /** {@inheritDoc} */
+    @Override
+    @Transactional
+    public MiRespuestaRS reprogramar(ReprogramarRq rq) {
+        if (rq == null || rq.getFechaHora() == null) {
+            throw new BadRequestException("La nueva fecha y hora es obligatoria");
+        }
+        Cita cita = cargar(rq.getCitaId());
+        exigirEditable(cita);
+        if (rq.getFechaHora().isBefore(LocalDateTime.now())) {
+            throw new BadRequestException("No se puede reprogramar a una fecha u hora pasada.");
+        }
+        LocalDateTime fin = rq.getFechaHora().plusMinutes(duracion(rq.getDuracionMinutos(), minutos(cita)));
+        validarReglas(cita.getCliente(), cita.getMascota(), cita.getMedico(), rq.getFechaHora(), fin, cita.getId());
+        cita.setFechaHora(rq.getFechaHora());
+        cita.setFechaHoraFin(fin);
+        citaRepository.save(cita);
+        return ok("Cita reprogramada exitosamente.");
+    }
+
+    /** {@inheritDoc} */
+    @Override
+    @Transactional
+    public MiRespuestaRS confirmar(Long citaId) {
+        Cita cita = cargar(citaId);
+        if (!CitaEstados.PENDIENTE.equals(cita.getEstado())) {
+            throw new BadRequestException("Solo se puede confirmar una cita PENDIENTE.");
+        }
+        cita.setEstado(CitaEstados.CONFIRMADA);
+        citaRepository.save(cita);
+        return ok("Cita confirmada.");
+    }
+
+    /** {@inheritDoc} */
+    @Override
+    @Transactional
+    public MiRespuestaRS marcarAtendida(Long citaId) {
+        Cita cita = cargar(citaId);
+        if (!List.of(CitaEstados.PENDIENTE, CitaEstados.CONFIRMADA).contains(cita.getEstado())) {
+            throw new BadRequestException("Solo se puede atender una cita PENDIENTE o CONFIRMADA.");
+        }
+        cita.setEstado(CitaEstados.ATENDIDA);
+        citaRepository.save(cita);
+        return ok("Cita marcada como atendida.");
+    }
+
+    /** {@inheritDoc} */
+    @Override
+    public List<CitaCalendarioRs> calendario(Long medicoId, LocalDateTime desde, LocalDateTime hasta) {
+        return citasEnRango(medicoId, desde, hasta).stream().map(c -> new CitaCalendarioRs(
+                c.getId(),
+                c.getMascota().getNombreMascota() + " - " + c.getCliente().getNombres() + " " + c.getCliente().getApellidos(),
+                c.getFechaHora(), c.getFechaHoraFin(), c.getEstado(),
+                c.getMascota().getNombreMascota(),
+                c.getCliente().getNombres() + " " + c.getCliente().getApellidos(),
+                c.getMotivo(), c.getMedico().getId(),
+                c.getMedico().getNombres() + " " + c.getMedico().getApellidos())).toList();
+    }
+
+    /** {@inheritDoc} */
+    @Override
+    public List<Cita> historialMascota(Integer mascotaId) {
+        obtenerMascota(mascotaId);
+        Long propio = medicoRestringido();
+        return citaRepository.findAllByMascota_MascotaIdOrderByFechaHoraDesc(mascotaId).stream()
+                .filter(c -> propio == null || c.getMedico().getId().equals(propio)).toList();
+    }
+
+    /** {@inheritDoc} */
+    @Override
+    public Map<String, Long> resumenPorEstado(Long medicoId, LocalDateTime desde, LocalDateTime hasta) {
+        Map<String, Long> r = new LinkedHashMap<>();
+        CitaEstados.TODOS.forEach(e -> r.put(e, 0L));
+        for (Cita c : citasEnRango(medicoId, desde, hasta)) {
+            r.merge(c.getEstado(), 1L, Long::sum);
+        }
+        r.put("TOTAL", r.values().stream().mapToLong(Long::longValue).sum());
+        return r;
+    }
+
+    /** {@inheritDoc} */
+    @Override
+    public byte[] reporteExcel(Long medicoId, LocalDateTime desde, LocalDateTime hasta) {
+        List<List<Object>> filas = new ArrayList<>();
+        for (Cita c : citasEnRango(medicoId, desde, hasta)) {
+            filas.add(List.of(c.getId(), c.getFechaHora().toString().replace('T', ' '),
+                    c.getFechaHoraFin() == null ? "" : c.getFechaHoraFin().toString().replace('T', ' '),
+                    c.getEstado(), c.getMascota().getNombreMascota(),
+                    c.getCliente().getNombres() + " " + c.getCliente().getApellidos(),
+                    c.getMedico().getNombres() + " " + c.getMedico().getApellidos(),
+                    c.getMotivo() == null ? "" : c.getMotivo()));
+        }
+        Map<String, Object> totales = new LinkedHashMap<>(resumenPorEstado(medicoId, desde, hasta));
+        return ExcelUtil.generar("Citas", "Reporte de citas " + desde.toLocalDate() + " a " + hasta.toLocalDate(),
+                List.of("Id", "Inicio", "Fin", "Estado", "Mascota", "Propietario", "Médico", "Motivo"), filas, totales);
+    }
+
+    // ------------------------------------------------------------------ utilidades
+
+    /** Citas del rango respetando que un MEDICO solo ve las suyas. */
+    private List<Cita> citasEnRango(Long medicoId, LocalDateTime desde, LocalDateTime hasta) {
+        if (desde == null || hasta == null) {
+            throw new BadRequestException("Los parámetros desde y hasta son obligatorios");
+        }
+        if (!hasta.isAfter(desde)) {
+            throw new BadRequestException("El rango de fechas es inválido: 'hasta' debe ser posterior a 'desde'");
+        }
+        Long propio = medicoRestringido();
+        Long filtro = propio != null ? propio : medicoId;
+        if (propio != null && medicoId != null && !medicoId.equals(propio)) {
+            throw new AccessDeniedException("Un médico solo consulta sus propias citas");
+        }
+        return citaRepository.enRango(filtro, desde, hasta);
+    }
+
+    /** @return id del médico si el usuario actual es MEDICO; {@code null} si no aplica restricción. */
+    private Long medicoRestringido() {
+        try {
+            return usuarioActual.tieneRol(Roles.MEDICO) ? usuarioActual.medicoId() : null;
+        } catch (RuntimeException e) {
+            return null;
+        }
+    }
+
+    private void usuarioActualExigirPropia(Cita c) {
+        usuarioActualExigirMedico(c.getMedico().getId());
+    }
+
+    private void usuarioActualExigirMedico(Long medicoId) {
+        try {
+            usuarioActual.exigirPropioSiEsMedico(medicoId);
+        } catch (AccessDeniedException e) {
+            throw e;
+        } catch (RuntimeException e) {
+            // sin sesión (uso interno): sin restricción adicional
+        }
+    }
+
+    private Cita cargar(Long citaId) {
         if (citaId == null || citaId <= 0) {
             throw new BadRequestException("El identificador de la cita es obligatorio.");
         }
-
-        Cita cita = this.citaRepository.findById(citaId)
-                .orElseThrow(() -> new BadRequestException("La cita con id " + citaId + " no existe."));
-
-        if ("Cancelada".equalsIgnoreCase(cita.getEstado())) {
-            throw new BadRequestException("La cita ya se encuentra en estado Cancelada.");
-        }
-
-        if ("Atendida".equalsIgnoreCase(cita.getEstado())) {
-            throw new BadRequestException("No es posible cancelar una cita que ya fue atendida.");
-        }
-
-        cita.setEstado("Cancelada");
-        this.citaRepository.save(cita);
-
-        MiRespuestaRS respuesta = new MiRespuestaRS();
-        respuesta.setStatus(200);
-        respuesta.setMessage("Cita cancelada exitosamente.");
-        return respuesta;
+        Cita c = citaRepository.bloquear(citaId)
+                .orElseThrow(() -> new NotFoundException("La cita con id " + citaId + " no existe."));
+        usuarioActualExigirPropia(c);
+        return c;
     }
 
-    /**
-     * Valida los datos estructurales comunes del request de cita.
-     *
-     * @param citaRq    datos a validar.
-     * @param esCreacion indica si la validación corresponde a un registro nuevo.
-     * @throws BadRequestException si algún dato requerido es inválido o se ingresa una fecha pasada.
-     */
-    private void validarCitaRq(CitaRq citaRq, boolean esCreacion) throws BadRequestException {
-        if (citaRq == null) {
+    private void exigirEditable(Cita cita) {
+        if (!List.of(CitaEstados.PENDIENTE, CitaEstados.CONFIRMADA).contains(cita.getEstado())) {
+            throw new BadRequestException("Solo se pueden editar o reprogramar citas PENDIENTES o CONFIRMADAS (estado actual: "
+                    + cita.getEstado() + ").");
+        }
+    }
+
+    private int minutos(Cita c) {
+        return c.getFechaHoraFin() == null ? DURACION_DEFECTO
+                : (int) java.time.Duration.between(c.getFechaHora(), c.getFechaHoraFin()).toMinutes();
+    }
+
+    private int duracion(Integer pedida, int defecto) {
+        int d = pedida == null ? defecto : pedida;
+        if (d < 10 || d > 240) {
+            throw new BadRequestException("La duración debe estar entre 10 y 240 minutos.");
+        }
+        return d;
+    }
+
+    private String estadoInicial(String estado) {
+        if (estado == null || estado.isBlank()) {
+            return CitaEstados.PENDIENTE;
+        }
+        String e = estado.trim().toUpperCase();
+        if (e.equals("PROGRAMADA")) {
+            return CitaEstados.PENDIENTE;
+        }
+        if (!e.equals(CitaEstados.PENDIENTE) && !e.equals(CitaEstados.CONFIRMADA)) {
+            throw new BadRequestException("Una cita nueva solo puede iniciar PENDIENTE o CONFIRMADA.");
+        }
+        return e;
+    }
+
+    private void validarRq(CitaRq rq) {
+        if (rq == null) {
             throw new BadRequestException("El objeto de solicitud de cita no puede ser nulo.");
         }
-        if (citaRq.getClienteId() == null || citaRq.getClienteId() <= 0) {
+        if (rq.getClienteId() == null || rq.getClienteId() <= 0) {
             throw new BadRequestException("El id del cliente es obligatorio y debe ser mayor a cero.");
         }
-        if (citaRq.getMascotaId() == null || citaRq.getMascotaId() <= 0) {
+        if (rq.getMascotaId() == null || rq.getMascotaId() <= 0) {
             throw new BadRequestException("El id de la mascota es obligatorio y debe ser mayor a cero.");
         }
-        if (citaRq.getMedicoId() == null || citaRq.getMedicoId() <= 0) {
+        if (rq.getMedicoId() == null || rq.getMedicoId() <= 0) {
             throw new BadRequestException("El id del médico veterinario es obligatorio y debe ser mayor a cero.");
         }
-        if (citaRq.getFechaHora() == null) {
+        if (rq.getFechaHora() == null) {
             throw new BadRequestException("La fecha y hora de la cita es obligatoria.");
         }
-        if (citaRq.getEstado() == null || citaRq.getEstado().trim().isEmpty()) {
-            throw new BadRequestException("El estado de la cita es obligatorio.");
-        }
-
-        // RN-CIT-07: Validar que el estado pertenezca a los permitidos
-        boolean estadoValido = ESTADOS_PERMITIDOS.stream()
-                .anyMatch(e -> e.equalsIgnoreCase(citaRq.getEstado().trim()));
-        if (!estadoValido) {
-            throw new BadRequestException("El estado '" + citaRq.getEstado() + "' no es válido. Estados permitidos: " + ESTADOS_PERMITIDOS);
-        }
-
-        // RN-CIT-06: No se pueden registrar citas en fechas/horas pasadas
-        if (esCreacion && citaRq.getFechaHora().isBefore(LocalDateTime.now())) {
-            throw new BadRequestException("No se pueden registrar citas en fechas u horas anteriores a la actual.");
+        if (rq.getMotivo() == null || rq.getMotivo().isBlank()) {
+            throw new BadRequestException("El motivo de la cita es obligatorio.");
         }
     }
 
-    /**
-     * RN-CIT-02: Valida que la mascota indicada pertenezca efectivamente al cliente que solicita la cita.
-     *
-     * @param mascota entidad mascota obtenida de la BD.
-     * @param cliente entidad cliente obtenida de la BD.
-     * @throws BadRequestException si la mascota no pertenece al cliente.
-     */
-    private void validarPertenenciaMascotaCliente(Mascota mascota, Cliente cliente) throws BadRequestException {
+    /** Aplica RN1 a RN4 y RN6. */
+    private void validarReglas(Cliente cliente, Mascota mascota, Medico medico,
+                               LocalDateTime inicio, LocalDateTime fin, Long excluir) {
         if (mascota.getCliente() == null || !mascota.getCliente().getClienteId().equals(cliente.getClienteId())) {
             throw new BadRequestException("La mascota '" + mascota.getNombreMascota() + "' no pertenece al cliente seleccionado ("
                     + cliente.getNombres() + " " + cliente.getApellidos() + ").");
         }
-    }
-
-    /**
-     * RN-CIT-04: Valida que el médico veterinario no tenga otra cita asignada en un intervalo
-     * de 15 minutos antes o 15 minutos después.
-     *
-     * @param medicoId      identificador del médico.
-     * @param fechaHora     fecha y hora deseada.
-     * @param idCitaExcluir identificador de la cita a excluir (para casos de actualización).
-     * @throws BadRequestException si existe conflicto horario.
-     */
-    private void validarDisponibilidadMedico(Long medicoId, LocalDateTime fechaHora, Long idCitaExcluir) throws BadRequestException {
-        LocalDateTime inicioRango = fechaHora.minusMinutes(15);
-        LocalDateTime finRango = fechaHora.plusMinutes(15);
-
-        List<Cita> citasConflicto = this.citaRepository.findAllByMedico_IdAndFechaHoraBetween(medicoId, inicioRango, finRango);
-
-        boolean hayConflicto = citasConflicto.stream()
-                .filter(c -> idCitaExcluir == null || !c.getId().equals(idCitaExcluir))
-                .anyMatch(c -> !("Cancelada".equalsIgnoreCase(c.getEstado())));
-
-        if (hayConflicto) {
-            throw new BadRequestException("El médico veterinario no está disponible en el horario seleccionado. "
-                    + "Ya cuenta con una cita en un intervalo menor a 15 minutos antes o después.");
+        if (!Boolean.TRUE.equals(medico.getActivo())) {
+            throw new BadRequestException("El médico veterinario está inactivo y no puede recibir citas.");
+        }
+        if (!inicio.toLocalDate().equals(fin.toLocalDate()) || !dentroDeHorario(medico.getId(), inicio, fin)) {
+            throw new BadRequestException("La cita está fuera del horario de disponibilidad del veterinario.");
+        }
+        long ex = excluir == null ? -1L : excluir;
+        if (!citaRepository.solapadasMedico(medico.getId(), inicio, fin, ex).isEmpty()) {
+            throw new ConflictException("El médico veterinario ya tiene una cita que se solapa con ese horario.");
+        }
+        if (!citaRepository.solapadasMascota(mascota.getMascotaId(), inicio, fin, ex).isEmpty()) {
+            throw new ConflictException("La mascota ya tiene otra cita activa en un horario que se solapa.");
         }
     }
 
-    /**
-     * RN-CIT-05: Valida que la mascota no tenga dos citas asignadas exactamente en la misma fecha y hora.
-     *
-     * @param mascotaId     identificador de la mascota.
-     * @param fechaHora     fecha y hora de la cita.
-     * @param idCitaExcluir identificador de la cita actual a excluir al actualizar.
-     * @throws BadRequestException si la mascota ya tiene otra cita activa a la misma hora.
-     */
-    private void validarDisponibilidadMascota(Integer mascotaId, LocalDateTime fechaHora, Long idCitaExcluir) throws BadRequestException {
-        List<Cita> citasMascota = this.citaRepository.findAllByMascota_MascotaIdAndFechaHora(mascotaId, fechaHora);
-
-        boolean hayConflicto = citasMascota.stream()
-                .filter(c -> idCitaExcluir == null || !c.getId().equals(idCitaExcluir))
-                .anyMatch(c -> !("Cancelada".equalsIgnoreCase(c.getEstado())));
-
-        if (hayConflicto) {
-            throw new BadRequestException("La mascota ya tiene otra cita activa programada en la misma fecha y hora.");
+    private boolean dentroDeHorario(Long medicoId, LocalDateTime inicio, LocalDateTime fin) {
+        int dia = inicio.getDayOfWeek().getValue();
+        LocalTime hi = inicio.toLocalTime();
+        LocalTime hf = fin.toLocalTime();
+        for (HorarioVeterinario h : horarioRepository.findAllByMedicoIdAndDiaSemanaAndActivoTrue(medicoId, dia)) {
+            if (!hi.isBefore(h.getHoraInicio()) && !hf.isAfter(h.getHoraFin())) {
+                return true;
+            }
         }
+        return false;
     }
 
-    /**
-     * Normaliza el texto del estado para almacenarlo con formato Capitalizado uniforme.
-     *
-     * @param estado texto del estado.
-     * @return estado normalizado.
-     */
-    private String normalizarEstado(String estado) {
-        if (estado == null) return "Pendiente";
-        return ESTADOS_PERMITIDOS.stream()
-                .filter(e -> e.equalsIgnoreCase(estado.trim()))
-                .findFirst()
-                .orElse(estado.trim());
+    private Cliente obtenerCliente(Long id) {
+        return clienteRepository.findById(id)
+                .orElseThrow(() -> new BadRequestException("El cliente con id " + id + " no existe."));
     }
 
-    /**
-     * Obtiene el cliente indicado o lanza excepción 400 si no existe.
-     */
-    private Cliente obtenerClienteValido(Long clienteId) throws BadRequestException {
-        return this.clienteRepository.findById(clienteId)
-                .orElseThrow(() -> new BadRequestException("El cliente con id " + clienteId + " no existe."));
+    private Mascota obtenerMascota(Integer id) {
+        return mascotaRepository.findById(id)
+                .orElseThrow(() -> new BadRequestException("La mascota con id " + id + " no existe."));
     }
 
-    /**
-     * Obtiene la mascota indicada o lanza excepción 400 si no existe.
-     */
-    private Mascota obtenerMascotaValida(Integer mascotaId) throws BadRequestException {
-        return this.mascotaRepository.findById(mascotaId)
-                .orElseThrow(() -> new BadRequestException("La mascota con id " + mascotaId + " no existe."));
+    private Medico obtenerMedico(Long id) {
+        return medicoRepository.findById(id)
+                .orElseThrow(() -> new BadRequestException("El médico veterinario con id " + id + " no existe."));
     }
 
-    /**
-     * Obtiene el médico indicado o lanza excepción 400 si no existe.
-     */
-    private Medico obtenerMedicoValido(Long medicoId) throws BadRequestException {
-        return this.medicoRepository.findById(medicoId)
-                .orElseThrow(() -> new BadRequestException("El médico veterinario con id " + medicoId + " no existe."));
+    private MiRespuestaRS ok(String mensaje) {
+        MiRespuestaRS r = new MiRespuestaRS();
+        r.setStatus(200);
+        r.setMessage(mensaje);
+        return r;
     }
 }

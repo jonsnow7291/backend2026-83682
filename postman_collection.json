@@ -1,17 +1,2087 @@
 {
   "info": {
-    "name": "Clinica Veterinaria - Parcial",
-    "description": "Coleccion de pruebas para todos los servicios REST de la clinica veterinaria. Usa la variable {{baseUrl}} para apuntar al backend.",
+    "name": "Clinica Veterinaria - Examen Final",
+    "description": "Ejecute primero un 'Login' del rol que va a probar: el token se guarda en {{token}}. Contrasena de todos los usuarios de prueba: Clinica2026*",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{token}}",
+        "type": "string"
+      }
+    ]
   },
   "variable": [
     {
       "key": "baseUrl",
-      "value": "http://localhost:8080/clinica/v1",
-      "type": "string"
+      "value": "http://localhost:8080/clinica/v1"
+    },
+    {
+      "key": "token",
+      "value": ""
+    },
+    {
+      "key": "medicoId",
+      "value": ""
     }
   ],
   "item": [
+    {
+      "name": "0 Auth",
+      "item": [
+        {
+          "name": "Login admin",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/auth/login",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "login"
+              ],
+              "query": []
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"admin\",\n  \"password\": \"Clinica2026*\"\n}"
+            },
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const j = pm.response.json();",
+                  "pm.collectionVariables.set('token', j.token);",
+                  "pm.collectionVariables.set('medicoId', j.usuario.medicoId || '');"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Login secretaria",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/auth/login",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "login"
+              ],
+              "query": []
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"secretaria\",\n  \"password\": \"Clinica2026*\"\n}"
+            },
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const j = pm.response.json();",
+                  "pm.collectionVariables.set('token', j.token);",
+                  "pm.collectionVariables.set('medicoId', j.usuario.medicoId || '');"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Login medico1",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/auth/login",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "login"
+              ],
+              "query": []
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"medico1\",\n  \"password\": \"Clinica2026*\"\n}"
+            },
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const j = pm.response.json();",
+                  "pm.collectionVariables.set('token', j.token);",
+                  "pm.collectionVariables.set('medicoId', j.usuario.medicoId || '');"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Login medico2",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/auth/login",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "login"
+              ],
+              "query": []
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"medico2\",\n  \"password\": \"Clinica2026*\"\n}"
+            },
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const j = pm.response.json();",
+                  "pm.collectionVariables.set('token', j.token);",
+                  "pm.collectionVariables.set('medicoId', j.usuario.medicoId || '');"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Login despacho",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/auth/login",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "login"
+              ],
+              "query": []
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"despacho\",\n  \"password\": \"Clinica2026*\"\n}"
+            },
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const j = pm.response.json();",
+                  "pm.collectionVariables.set('token', j.token);",
+                  "pm.collectionVariables.set('medicoId', j.usuario.medicoId || '');"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Sesion actual",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/auth/me",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "me"
+              ],
+              "query": []
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "1 Inventario",
+      "item": [
+        {
+          "name": "Listar productos (filtro)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/medicamento/listar?filtro=TODOS",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "medicamento",
+                "listar"
+              ],
+              "query": [
+                {
+                  "key": "filtro",
+                  "value": "TODOS"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Agotados",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/medicamento/listar?filtro=AGOTADOS",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "medicamento",
+                "listar"
+              ],
+              "query": [
+                {
+                  "key": "filtro",
+                  "value": "AGOTADOS"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Stock bajo",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/medicamento/listar?filtro=STOCK_BAJO",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "medicamento",
+                "listar"
+              ],
+              "query": [
+                {
+                  "key": "filtro",
+                  "value": "STOCK_BAJO"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Proximos a vencer",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/medicamento/listar?filtro=PROXIMOS_A_VENCER",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "medicamento",
+                "listar"
+              ],
+              "query": [
+                {
+                  "key": "filtro",
+                  "value": "PROXIMOS_A_VENCER"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Vencidos",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/medicamento/listar?filtro=VENCIDOS",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "medicamento",
+                "listar"
+              ],
+              "query": [
+                {
+                  "key": "filtro",
+                  "value": "VENCIDOS"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Crear producto",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/medicamento/guardar",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "medicamento",
+                "guardar"
+              ],
+              "query": []
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"codigo\": \"PRD00001\",\n  \"nombre\": \"Producto nuevo\",\n  \"tipo\": \"MEDICAMENTO\",\n  \"registroInvima\": \"INVIMA-1\",\n  \"precioCompra\": 1000,\n  \"precioVenta\": 1500,\n  \"ivaPorcentaje\": 0,\n  \"stockMinimo\": 5\n}"
+            }
+          }
+        },
+        {
+          "name": "Entrada de lote",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/inventario/entrada",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "inventario",
+                "entrada"
+              ],
+              "query": []
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"medicamentoId\": 1,\n  \"numeroLote\": \"L-NUEVO\",\n  \"cantidad\": 20,\n  \"precioCompra\": 8000,\n  \"fechaCompra\": \"2026-11-01\",\n  \"fechaVencimiento\": \"2028-11-01\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Lotes de un producto",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/inventario/lotes?medicamentoId=1",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "inventario",
+                "lotes"
+              ],
+              "query": [
+                {
+                  "key": "medicamentoId",
+                  "value": "1"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Movimientos",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/inventario/movimientos?medicamentoId=1",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "inventario",
+                "movimientos"
+              ],
+              "query": [
+                {
+                  "key": "medicamentoId",
+                  "value": "1"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Carga masiva - previsualizar",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/inventario/carga-masiva/previsualizar",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "inventario",
+                "carga-masiva",
+                "previsualizar"
+              ],
+              "query": []
+            },
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "archivo",
+                  "type": "file",
+                  "src": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Carga masiva - confirmar",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/inventario/carga-masiva/confirmar",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "inventario",
+                "carga-masiva",
+                "confirmar"
+              ],
+              "query": []
+            },
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "archivo",
+                  "type": "file",
+                  "src": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Carga masiva - historial",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/inventario/carga-masiva",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "inventario",
+                "carga-masiva"
+              ],
+              "query": []
+            }
+          }
+        },
+        {
+          "name": "Carga masiva - errores",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/inventario/carga-masiva/1/errores",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "inventario",
+                "carga-masiva",
+                "1",
+                "errores"
+              ],
+              "query": []
+            }
+          }
+        },
+        {
+          "name": "Carga masiva - plantilla",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/inventario/carga-masiva/plantilla?formato=xlsx",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "inventario",
+                "carga-masiva",
+                "plantilla"
+              ],
+              "query": [
+                {
+                  "key": "formato",
+                  "value": "xlsx"
+                }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "2 Citas",
+      "item": [
+        {
+          "name": "Registrar cita",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/cita/guardar",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "cita",
+                "guardar"
+              ],
+              "query": []
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"clienteId\": 1,\n  \"mascotaId\": 1,\n  \"medicoId\": 1,\n  \"fechaHora\": \"2026-12-07T09:00:00\",\n  \"duracionMinutos\": 30,\n  \"motivo\": \"Control\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Calendario",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/cita/calendario?desde=2026-12-01T00:00:00&hasta=2026-12-31T23:59:59",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "cita",
+                "calendario"
+              ],
+              "query": [
+                {
+                  "key": "desde",
+                  "value": "2026-12-01T00:00:00"
+                },
+                {
+                  "key": "hasta",
+                  "value": "2026-12-31T23:59:59"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Confirmar",
+          "request": {
+            "method": "PATCH",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/cita/confirmar?citaId=1",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "cita",
+                "confirmar"
+              ],
+              "query": [
+                {
+                  "key": "citaId",
+                  "value": "1"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Reprogramar",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/cita/reprogramar",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "cita",
+                "reprogramar"
+              ],
+              "query": []
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"citaId\": 1,\n  \"fechaHora\": \"2026-12-07T10:00:00\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Cancelar",
+          "request": {
+            "method": "PATCH",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/cita/cancelar?citaId=1&motivo=Propietario no asiste",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "cita",
+                "cancelar"
+              ],
+              "query": [
+                {
+                  "key": "citaId",
+                  "value": "1"
+                },
+                {
+                  "key": "motivo",
+                  "value": "Propietario no asiste"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Marcar atendida",
+          "request": {
+            "method": "PATCH",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/cita/atender?citaId=1",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "cita",
+                "atender"
+              ],
+              "query": [
+                {
+                  "key": "citaId",
+                  "value": "1"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Historial de la mascota",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/cita/historial-mascota?mascotaId=1",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "cita",
+                "historial-mascota"
+              ],
+              "query": [
+                {
+                  "key": "mascotaId",
+                  "value": "1"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Resumen por estado",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/cita/resumen?desde=2026-01-01T00:00:00&hasta=2026-12-31T23:59:59",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "cita",
+                "resumen"
+              ],
+              "query": [
+                {
+                  "key": "desde",
+                  "value": "2026-01-01T00:00:00"
+                },
+                {
+                  "key": "hasta",
+                  "value": "2026-12-31T23:59:59"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Reporte Excel",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/cita/reporte-excel?desde=2026-01-01T00:00:00&hasta=2026-12-31T23:59:59",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "cita",
+                "reporte-excel"
+              ],
+              "query": [
+                {
+                  "key": "desde",
+                  "value": "2026-01-01T00:00:00"
+                },
+                {
+                  "key": "hasta",
+                  "value": "2026-12-31T23:59:59"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Horarios del veterinario",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/horario-veterinario/listar?medicoId=1",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "horario-veterinario",
+                "listar"
+              ],
+              "query": [
+                {
+                  "key": "medicoId",
+                  "value": "1"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Crear horario",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/horario-veterinario/guardar",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "horario-veterinario",
+                "guardar"
+              ],
+              "query": []
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"medicoId\": 1,\n  \"diaSemana\": 7,\n  \"horaInicio\": \"09:00\",\n  \"horaFin\": \"12:00\"\n}"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "3 Atencion, formula y facturacion",
+      "item": [
+        {
+          "name": "Tarifas",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/tarifa/listar",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "tarifa",
+                "listar"
+              ],
+              "query": []
+            }
+          }
+        },
+        {
+          "name": "Modificar tarifa (ADMIN)",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/tarifa/actualizar",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "tarifa",
+                "actualizar"
+              ],
+              "query": []
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"id\": 1,\n  \"especializacionId\": 1,\n  \"servicio\": \"Consulta general\",\n  \"valor\": 65000,\n  \"ivaPorcentaje\": 0\n}"
+            }
+          }
+        },
+        {
+          "name": "Historial de tarifa",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/tarifa/historial?id=1",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "tarifa",
+                "historial"
+              ],
+              "query": [
+                {
+                  "key": "id",
+                  "value": "1"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Abrir atencion",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/atencion/abrir",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "atencion",
+                "abrir"
+              ],
+              "query": []
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"citaId\": 1\n}"
+            }
+          }
+        },
+        {
+          "name": "Registrar atencion",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/atencion/registrar",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "atencion",
+                "registrar"
+              ],
+              "query": []
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"id\": 1,\n  \"sintomas\": \"Tos\",\n  \"diagnostico\": \"Traqueitis\",\n  \"observaciones\": \"-\",\n  \"recomendaciones\": \"Reposo\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Finalizar atencion",
+          "request": {
+            "method": "PATCH",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/atencion/finalizar?id=1",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "atencion",
+                "finalizar"
+              ],
+              "query": [
+                {
+                  "key": "id",
+                  "value": "1"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Prefactura PDF",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/atencion/1/prefactura-pdf",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "atencion",
+                "1",
+                "prefactura-pdf"
+              ],
+              "query": []
+            }
+          }
+        },
+        {
+          "name": "Crear formula",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/formula-medica/guardar",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "formula-medica",
+                "guardar"
+              ],
+              "query": []
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"citaId\": 1,\n  \"indicaciones\": \"Con comida\",\n  \"detalles\": [\n    {\n      \"medicamentoId\": 1,\n      \"dosis\": \"5 ml\",\n      \"frecuencia\": \"cada 12 h\",\n      \"duracionDias\": 7,\n      \"cantidadPrescrita\": 2,\n      \"viaAdministracion\": \"Oral\"\n    }\n  ]\n}"
+            }
+          }
+        },
+        {
+          "name": "Disponibilidad de la formula",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/formula-medica/1/disponibilidad",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "formula-medica",
+                "1",
+                "disponibilidad"
+              ],
+              "query": []
+            }
+          }
+        },
+        {
+          "name": "Formula PDF",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/formula-medica/1/pdf",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "formula-medica",
+                "1",
+                "pdf"
+              ],
+              "query": []
+            }
+          }
+        },
+        {
+          "name": "Generar factura",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/factura/generar",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "factura",
+                "generar"
+              ],
+              "query": []
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"citaId\": 1,\n  \"descuento\": 0\n}"
+            }
+          }
+        },
+        {
+          "name": "Historial de facturacion",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/factura/listar?clienteId=1",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "factura",
+                "listar"
+              ],
+              "query": [
+                {
+                  "key": "clienteId",
+                  "value": "1"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Factura PDF",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/factura/1/pdf",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "factura",
+                "1",
+                "pdf"
+              ],
+              "query": []
+            }
+          }
+        },
+        {
+          "name": "Registrar pago",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/pago/registrar",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "pago",
+                "registrar"
+              ],
+              "query": []
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"facturaId\": 1,\n  \"valor\": 10000,\n  \"metodo\": \"EFECTIVO\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Anular factura",
+          "request": {
+            "method": "PATCH",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/factura/anular?id=1&motivo=Error de digitacion",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "factura",
+                "anular"
+              ],
+              "query": [
+                {
+                  "key": "id",
+                  "value": "1"
+                },
+                {
+                  "key": "motivo",
+                  "value": "Error de digitacion"
+                }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "4 Despacho (login despacho)",
+      "item": [
+        {
+          "name": "Pendientes",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/despacho/pendientes",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "despacho",
+                "pendientes"
+              ],
+              "query": []
+            }
+          }
+        },
+        {
+          "name": "Detalle de la formula",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/despacho/formula/1",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "despacho",
+                "formula",
+                "1"
+              ],
+              "query": []
+            }
+          }
+        },
+        {
+          "name": "Preparar (FEFO)",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/despacho/1/preparar",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "despacho",
+                "1",
+                "preparar"
+              ],
+              "query": []
+            }
+          }
+        },
+        {
+          "name": "Confirmar",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/despacho/1/confirmar",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "despacho",
+                "1",
+                "confirmar"
+              ],
+              "query": []
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"observaciones\": \"Entrega completa\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Comprobante PDF",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/despacho/1/comprobante-pdf",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "despacho",
+                "1",
+                "comprobante-pdf"
+              ],
+              "query": []
+            }
+          }
+        },
+        {
+          "name": "Reversar (autorizado)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/despacho/1/reversar",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "despacho",
+                "1",
+                "reversar"
+              ],
+              "query": []
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"motivo\": \"Error en la entrega\",\n  \"autorizadorUsername\": \"admin\",\n  \"autorizadorPassword\": \"Clinica2026*\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Cancelar (autorizado)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/despacho/1/cancelar",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "despacho",
+                "1",
+                "cancelar"
+              ],
+              "query": []
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"motivo\": \"Fórmula anulada\",\n  \"autorizadorUsername\": \"admin\",\n  \"autorizadorPassword\": \"Clinica2026*\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Historial",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/despacho/historial",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "despacho",
+                "historial"
+              ],
+              "query": []
+            }
+          }
+        },
+        {
+          "name": "Historial por medicamento",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/despacho/historial-medicamento?medicamentoId=1",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "despacho",
+                "historial-medicamento"
+              ],
+              "query": [
+                {
+                  "key": "medicamentoId",
+                  "value": "1"
+                }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "5 Reportes (login admin)",
+      "item": [
+        {
+          "name": "Catalogo",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/reportes/catalogo",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "reportes",
+                "catalogo"
+              ],
+              "query": []
+            }
+          }
+        },
+        {
+          "name": "ingresos-periodo",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/reportes/ingresos-periodo?desde=2026-01-01&hasta=2026-12-31&formato=json",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "reportes",
+                "ingresos-periodo"
+              ],
+              "query": [
+                {
+                  "key": "desde",
+                  "value": "2026-01-01"
+                },
+                {
+                  "key": "hasta",
+                  "value": "2026-12-31"
+                },
+                {
+                  "key": "formato",
+                  "value": "json"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "ingresos-consultas",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/reportes/ingresos-consultas?desde=2026-01-01&hasta=2026-12-31&formato=json",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "reportes",
+                "ingresos-consultas"
+              ],
+              "query": [
+                {
+                  "key": "desde",
+                  "value": "2026-01-01"
+                },
+                {
+                  "key": "hasta",
+                  "value": "2026-12-31"
+                },
+                {
+                  "key": "formato",
+                  "value": "json"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "ingresos-medicamentos",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/reportes/ingresos-medicamentos?desde=2026-01-01&hasta=2026-12-31&formato=json",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "reportes",
+                "ingresos-medicamentos"
+              ],
+              "query": [
+                {
+                  "key": "desde",
+                  "value": "2026-01-01"
+                },
+                {
+                  "key": "hasta",
+                  "value": "2026-12-31"
+                },
+                {
+                  "key": "formato",
+                  "value": "json"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "ingresos-especialidad",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/reportes/ingresos-especialidad?desde=2026-01-01&hasta=2026-12-31&formato=json",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "reportes",
+                "ingresos-especialidad"
+              ],
+              "query": [
+                {
+                  "key": "desde",
+                  "value": "2026-01-01"
+                },
+                {
+                  "key": "hasta",
+                  "value": "2026-12-31"
+                },
+                {
+                  "key": "formato",
+                  "value": "json"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "ingresos-veterinario",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/reportes/ingresos-veterinario?desde=2026-01-01&hasta=2026-12-31&formato=json",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "reportes",
+                "ingresos-veterinario"
+              ],
+              "query": [
+                {
+                  "key": "desde",
+                  "value": "2026-01-01"
+                },
+                {
+                  "key": "hasta",
+                  "value": "2026-12-31"
+                },
+                {
+                  "key": "formato",
+                  "value": "json"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "facturas-resumen",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/reportes/facturas-resumen?desde=2026-01-01&hasta=2026-12-31&formato=json",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "reportes",
+                "facturas-resumen"
+              ],
+              "query": [
+                {
+                  "key": "desde",
+                  "value": "2026-01-01"
+                },
+                {
+                  "key": "hasta",
+                  "value": "2026-12-31"
+                },
+                {
+                  "key": "formato",
+                  "value": "json"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "resumen-financiero",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/reportes/resumen-financiero?desde=2026-01-01&hasta=2026-12-31&formato=json",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "reportes",
+                "resumen-financiero"
+              ],
+              "query": [
+                {
+                  "key": "desde",
+                  "value": "2026-01-01"
+                },
+                {
+                  "key": "hasta",
+                  "value": "2026-12-31"
+                },
+                {
+                  "key": "formato",
+                  "value": "json"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "inventario-existencias",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/reportes/inventario-existencias?desde=2026-01-01&hasta=2026-12-31&formato=json",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "reportes",
+                "inventario-existencias"
+              ],
+              "query": [
+                {
+                  "key": "desde",
+                  "value": "2026-01-01"
+                },
+                {
+                  "key": "hasta",
+                  "value": "2026-12-31"
+                },
+                {
+                  "key": "formato",
+                  "value": "json"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "inventario-agotados",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/reportes/inventario-agotados?desde=2026-01-01&hasta=2026-12-31&formato=json",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "reportes",
+                "inventario-agotados"
+              ],
+              "query": [
+                {
+                  "key": "desde",
+                  "value": "2026-01-01"
+                },
+                {
+                  "key": "hasta",
+                  "value": "2026-12-31"
+                },
+                {
+                  "key": "formato",
+                  "value": "json"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "inventario-stock-minimo",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/reportes/inventario-stock-minimo?desde=2026-01-01&hasta=2026-12-31&formato=json",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "reportes",
+                "inventario-stock-minimo"
+              ],
+              "query": [
+                {
+                  "key": "desde",
+                  "value": "2026-01-01"
+                },
+                {
+                  "key": "hasta",
+                  "value": "2026-12-31"
+                },
+                {
+                  "key": "formato",
+                  "value": "json"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "inventario-proximos-vencer",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/reportes/inventario-proximos-vencer?desde=2026-01-01&hasta=2026-12-31&formato=json",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "reportes",
+                "inventario-proximos-vencer"
+              ],
+              "query": [
+                {
+                  "key": "desde",
+                  "value": "2026-01-01"
+                },
+                {
+                  "key": "hasta",
+                  "value": "2026-12-31"
+                },
+                {
+                  "key": "formato",
+                  "value": "json"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "inventario-vencidos",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/reportes/inventario-vencidos?desde=2026-01-01&hasta=2026-12-31&formato=json",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "reportes",
+                "inventario-vencidos"
+              ],
+              "query": [
+                {
+                  "key": "desde",
+                  "value": "2026-01-01"
+                },
+                {
+                  "key": "hasta",
+                  "value": "2026-12-31"
+                },
+                {
+                  "key": "formato",
+                  "value": "json"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "inventario-movimientos",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/reportes/inventario-movimientos?desde=2026-01-01&hasta=2026-12-31&formato=json",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "reportes",
+                "inventario-movimientos"
+              ],
+              "query": [
+                {
+                  "key": "desde",
+                  "value": "2026-01-01"
+                },
+                {
+                  "key": "hasta",
+                  "value": "2026-12-31"
+                },
+                {
+                  "key": "formato",
+                  "value": "json"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "citas-periodo",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/reportes/citas-periodo?desde=2026-01-01&hasta=2026-12-31&formato=json",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "reportes",
+                "citas-periodo"
+              ],
+              "query": [
+                {
+                  "key": "desde",
+                  "value": "2026-01-01"
+                },
+                {
+                  "key": "hasta",
+                  "value": "2026-12-31"
+                },
+                {
+                  "key": "formato",
+                  "value": "json"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "citas-estado",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/reportes/citas-estado?desde=2026-01-01&hasta=2026-12-31&formato=json",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "reportes",
+                "citas-estado"
+              ],
+              "query": [
+                {
+                  "key": "desde",
+                  "value": "2026-01-01"
+                },
+                {
+                  "key": "hasta",
+                  "value": "2026-12-31"
+                },
+                {
+                  "key": "formato",
+                  "value": "json"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "consultas-veterinario",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/reportes/consultas-veterinario?desde=2026-01-01&hasta=2026-12-31&formato=json",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "reportes",
+                "consultas-veterinario"
+              ],
+              "query": [
+                {
+                  "key": "desde",
+                  "value": "2026-01-01"
+                },
+                {
+                  "key": "hasta",
+                  "value": "2026-12-31"
+                },
+                {
+                  "key": "formato",
+                  "value": "json"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "consultas-especialidad",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/reportes/consultas-especialidad?desde=2026-01-01&hasta=2026-12-31&formato=json",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "reportes",
+                "consultas-especialidad"
+              ],
+              "query": [
+                {
+                  "key": "desde",
+                  "value": "2026-01-01"
+                },
+                {
+                  "key": "hasta",
+                  "value": "2026-12-31"
+                },
+                {
+                  "key": "formato",
+                  "value": "json"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "mascotas-atendidas",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/reportes/mascotas-atendidas?desde=2026-01-01&hasta=2026-12-31&formato=json",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "reportes",
+                "mascotas-atendidas"
+              ],
+              "query": [
+                {
+                  "key": "desde",
+                  "value": "2026-01-01"
+                },
+                {
+                  "key": "hasta",
+                  "value": "2026-12-31"
+                },
+                {
+                  "key": "formato",
+                  "value": "json"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Exportar PDF",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/reportes/ingresos-periodo?formato=pdf",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "reportes",
+                "ingresos-periodo"
+              ],
+              "query": [
+                {
+                  "key": "formato",
+                  "value": "pdf"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Exportar Excel",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/reportes/ingresos-periodo?formato=xlsx",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "reportes",
+                "ingresos-periodo"
+              ],
+              "query": [
+                {
+                  "key": "formato",
+                  "value": "xlsx"
+                }
+              ]
+            }
+          }
+        }
+      ]
+    },
     {
       "name": "Cliente",
       "item": [
@@ -51,62 +2121,6 @@
                   "key": "clienteId",
                   "value": "1"
                 }
-              ]
-            }
-          }
-        }
-      ]
-    },
-    {
-      "name": "Clinica (diagnostico)",
-      "item": [
-        {
-          "name": "Test",
-          "request": {
-            "method": "GET",
-            "header": [],
-            "url": {
-              "raw": "{{baseUrl}}/clinica/test",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "clinica",
-                "test"
-              ]
-            }
-          }
-        },
-        {
-          "name": "Test2",
-          "request": {
-            "method": "GET",
-            "header": [],
-            "url": {
-              "raw": "{{baseUrl}}/clinica/test2",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "clinica",
-                "test2"
-              ]
-            }
-          }
-        },
-        {
-          "name": "Test3",
-          "request": {
-            "method": "GET",
-            "header": [],
-            "url": {
-              "raw": "{{baseUrl}}/clinica/test3",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "clinica",
-                "test3"
               ]
             }
           }
@@ -273,236 +2287,6 @@
                   "key": "mascotaId",
                   "value": "1"
                 }
-              ]
-            }
-          }
-        }
-      ]
-    },
-    {
-      "name": "Cita",
-      "item": [
-        {
-          "name": "Listar citas por fecha",
-          "request": {
-            "method": "GET",
-            "header": [],
-            "url": {
-              "raw": "{{baseUrl}}/cita/listar-por-fecha?fechaInicial=2024-01-01T00:00:00&fechaFinal=2026-12-31T00:00:00",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "cita",
-                "listar-por-fecha"
-              ],
-              "query": [
-                {
-                  "key": "fechaInicial",
-                  "value": "2024-01-01T00:00:00"
-                },
-                {
-                  "key": "fechaFinal",
-                  "value": "2026-12-31T00:00:00"
-                }
-              ]
-            }
-          }
-        },
-        {
-          "name": "Guardar cita",
-          "request": {
-            "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"clienteId\": 1,\n  \"mascotaId\": 1,\n  \"medicoId\": 1,\n  \"fechaHora\": \"2026-09-20T10:00:00\",\n  \"estado\": \"programada\",\n  \"motivo\": \"Chequeo general\"\n}"
-            },
-            "url": {
-              "raw": "{{baseUrl}}/cita/guardar",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "cita",
-                "guardar"
-              ]
-            }
-          }
-        },
-        {
-          "name": "Actualizar cita",
-          "request": {
-            "method": "PUT",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"citaId\": 1,\n  \"clienteId\": 1,\n  \"mascotaId\": 1,\n  \"medicoId\": 1,\n  \"fechaHora\": \"2026-10-01T09:00:00\",\n  \"estado\": \"atendida\",\n  \"motivo\": \"Control\"\n}"
-            },
-            "url": {
-              "raw": "{{baseUrl}}/cita/actualizar",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "cita",
-                "actualizar"
-              ]
-            }
-          }
-        },
-        {
-          "name": "Listar citas atendidas por mascota",
-          "request": {
-            "method": "GET",
-            "header": [],
-            "url": {
-              "raw": "{{baseUrl}}/cita/listar-atendidas-por-mascota?mascotaId=1",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "cita",
-                "listar-atendidas-por-mascota"
-              ],
-              "query": [
-                {
-                  "key": "mascotaId",
-                  "value": "1"
-                }
-              ]
-            }
-          }
-        }
-      ]
-    },
-    {
-      "name": "Formula Medica",
-      "item": [
-        {
-          "name": "Listar formulas medicas",
-          "request": {
-            "method": "GET",
-            "header": [],
-            "url": {
-              "raw": "{{baseUrl}}/formula-medica/listar",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "formula-medica",
-                "listar"
-              ]
-            }
-          }
-        },
-        {
-          "name": "Consultar formula medica",
-          "request": {
-            "method": "GET",
-            "header": [],
-            "url": {
-              "raw": "{{baseUrl}}/formula-medica/consultar?formulaId=1",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "formula-medica",
-                "consultar"
-              ],
-              "query": [
-                {
-                  "key": "formulaId",
-                  "value": "1"
-                }
-              ]
-            }
-          }
-        },
-        {
-          "name": "Guardar formula medica",
-          "request": {
-            "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"mascotaId\": 1,\n  \"citaId\": 1,\n  \"medicamentoId\": 1,\n  \"dosis\": \"5 ml\",\n  \"frecuencia\": \"Cada 8 horas\",\n  \"duracionDias\": 7,\n  \"indicaciones\": \"Administrar con comida\"\n}"
-            },
-            "url": {
-              "raw": "{{baseUrl}}/formula-medica/guardar",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "formula-medica",
-                "guardar"
-              ]
-            }
-          }
-        },
-        {
-          "name": "Actualizar formula medica",
-          "request": {
-            "method": "PUT",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"formulaId\": 1,\n  \"mascotaId\": 1,\n  \"citaId\": 1,\n  \"medicamentoId\": 1,\n  \"dosis\": \"5 ml\",\n  \"frecuencia\": \"Cada 8 horas\",\n  \"duracionDias\": 10,\n  \"indicaciones\": \"Administrar con comida\"\n}"
-            },
-            "url": {
-              "raw": "{{baseUrl}}/formula-medica/actualizar",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "formula-medica",
-                "actualizar"
-              ]
-            }
-          }
-        },
-        {
-          "name": "Guardar formula - error duracion invalida (400)",
-          "request": {
-            "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"mascotaId\": 1,\n  \"citaId\": 1,\n  \"medicamentoId\": 1,\n  \"dosis\": \"5 ml\",\n  \"frecuencia\": \"Cada 8 horas\",\n  \"duracionDias\": 0,\n  \"indicaciones\": \"Administrar con comida\"\n}"
-            },
-            "url": {
-              "raw": "{{baseUrl}}/formula-medica/guardar",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "formula-medica",
-                "guardar"
               ]
             }
           }

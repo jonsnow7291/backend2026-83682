@@ -4,77 +4,72 @@ import com.uniminuto.clinica.entity.FormulaMedica;
 import com.uniminuto.clinica.exception.BadRequestException;
 import com.uniminuto.clinica.models.FormulaMedicaRq;
 import com.uniminuto.clinica.models.MiRespuestaRS;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.CrossOrigin;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.PutMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Map;
 
 /**
- * Contrato REST para la gestión de fórmulas médicas (prescripciones) emitidas en las citas.
- * No se expone eliminación física: una fórmula emitida hace parte del historial clínico
- * de la mascota y debe conservarse.
+ * Contrato REST de fórmulas médicas. Solo MEDICO/ADMIN crean o editan; DESPACHO_MEDICO no tiene acceso.
  */
 @CrossOrigin(origins = "*", allowedHeaders = "*")
 @RequestMapping("/formula-medica")
+@Tag(name = "Fórmulas médicas", description = "Fórmulas con varios medicamentos. Crearlas NO descuenta inventario (solo el despacho lo hace)")
 public interface FormulaMedicaApi {
 
     /**
-     * Lista todas las fórmulas médicas, ordenadas de la fecha
-     * de creación más reciente a la más antigua.
-     *
-     * @return respuesta HTTP con la lista completa de fórmulas médicas.
-     * @throws BadRequestException si ocurre un error al procesar la solicitud.
+     * @param citaId    filtro opcional.
+     * @param mascotaId filtro opcional.
+     * @return fórmulas.
      */
-    @GetMapping(value = "/listar",
-            produces = {"application/json"})
-    ResponseEntity<List<FormulaMedica>> listarFormulasMedicas()
-            throws BadRequestException;
+    @Operation(summary = "Listar fórmulas")
+    @GetMapping(value = "/listar", produces = {"application/json"})
+    ResponseEntity<List<FormulaMedica>> listarFormulasMedicas(@RequestParam(required = false) Long citaId,
+                                                              @RequestParam(required = false) Integer mascotaId);
 
     /**
-     * Consulta el detalle completo de una fórmula médica por su identificador.
-     *
-     * @param formulaId identificador de la fórmula médica.
-     * @return respuesta HTTP con la fórmula médica encontrada.
-     * @throws BadRequestException si el identificador es inválido o la fórmula no existe.
+     * @param formulaId fórmula.
+     * @return fórmula con medicamentos.
+     * @throws BadRequestException si el id es inválido.
      */
-    @GetMapping(value = "/consultar",
-            produces = {"application/json"})
-    ResponseEntity<FormulaMedica> consultarFormulaMedica(
-            @RequestParam Long formulaId)
-            throws BadRequestException;
+    @Operation(summary = "Consultar fórmula")
+    @GetMapping(value = "/consultar", produces = {"application/json"})
+    ResponseEntity<FormulaMedica> consultarFormulaMedica(@RequestParam Long formulaId) throws BadRequestException;
 
     /**
-     * Registra una nueva fórmula médica asociada a una cita atendida.
-     *
-     * @param formulaMedicaRq datos de la fórmula médica a registrar.
-     * @return respuesta HTTP con el resultado de la operación.
-     * @throws BadRequestException si los datos son inválidos o incumplen las reglas de negocio.
+     * @param rq datos.
+     * @return confirmación con el id.
+     * @throws BadRequestException si falla una validación.
      */
-    @PostMapping(value = "/guardar",
-            produces = {"application/json"},
-            consumes = {"application/json"})
-    ResponseEntity<MiRespuestaRS> guardarFormulaMedica(
-            @RequestBody FormulaMedicaRq formulaMedicaRq)
-            throws BadRequestException;
+    @Operation(summary = "Crear fórmula", description = "Sobre una cita atendida; varios medicamentos. Crea el despacho PENDIENTE_DESPACHO sin tocar el inventario.")
+    @PostMapping(value = "/guardar", produces = {"application/json"}, consumes = {"application/json"})
+    ResponseEntity<MiRespuestaRS> guardarFormulaMedica(@RequestBody FormulaMedicaRq rq) throws BadRequestException;
 
     /**
-     * Actualiza una fórmula médica existente.
-     *
-     * @param formulaMedicaRq datos actualizados de la fórmula médica (incluye {@code formulaId}).
-     * @return respuesta HTTP con el resultado de la operación.
-     * @throws BadRequestException si los datos son inválidos, la fórmula no existe
-     *                             o incumple las reglas de negocio.
+     * @param rq datos con id.
+     * @return confirmación.
+     * @throws BadRequestException si falla una validación.
      */
-    @PutMapping(value = "/actualizar",
-            produces = {"application/json"},
-            consumes = {"application/json"})
-    ResponseEntity<MiRespuestaRS> actualizarFormulaMedica(
-            @RequestBody FormulaMedicaRq formulaMedicaRq)
-            throws BadRequestException;
+    @Operation(summary = "Editar fórmula", description = "Solo mientras el despacho siga PENDIENTE_DESPACHO.")
+    @PutMapping(value = "/actualizar", produces = {"application/json"}, consumes = {"application/json"})
+    ResponseEntity<MiRespuestaRS> actualizarFormulaMedica(@RequestBody FormulaMedicaRq rq) throws BadRequestException;
+
+    /**
+     * @param id fórmula.
+     * @return disponibilidad por medicamento.
+     */
+    @Operation(summary = "Disponibilidad de los medicamentos de la fórmula")
+    @GetMapping(value = "/{id}/disponibilidad", produces = {"application/json"})
+    ResponseEntity<List<Map<String, Object>>> disponibilidad(@PathVariable Long id);
+
+    /**
+     * @param id fórmula.
+     * @return PDF.
+     */
+    @Operation(summary = "Fórmula en PDF")
+    @GetMapping(value = "/{id}/pdf", produces = {"application/pdf"})
+    ResponseEntity<byte[]> pdf(@PathVariable Long id);
 }

@@ -11,6 +11,10 @@ import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
+import org.springframework.security.access.AccessDeniedException;
+import org.springframework.web.bind.MethodArgumentNotValidException;
+import org.springframework.web.multipart.MaxUploadSizeExceededException;
+import org.springframework.web.servlet.resource.NoResourceFoundException;
 
 /**
  * Manejador centralizado de errores: traduce las excepciones a respuestas JSON
@@ -44,6 +48,90 @@ public class GlobalExceptionHandler {
         return ResponseEntity
                 .status(ex.getStatus())
                 .body(error);
+    }
+
+    /**
+     * Recurso inexistente: HTTP 404.
+     *
+     * @param ex excepción de negocio.
+     * @return respuesta HTTP 404.
+     */
+    @ExceptionHandler(NotFoundException.class)
+    public ResponseEntity<ErrorResponse> handleNotFound(NotFoundException ex) {
+        return construir(HttpStatus.NOT_FOUND, "NOT FOUND", ex.getMessage());
+    }
+
+    /**
+     * Ruta inexistente: HTTP 404.
+     *
+     * @param ex excepción de Spring MVC.
+     * @return respuesta HTTP 404.
+     */
+    @ExceptionHandler(NoResourceFoundException.class)
+    public ResponseEntity<ErrorResponse> handleNoResource(NoResourceFoundException ex) {
+        return construir(HttpStatus.NOT_FOUND, "NOT FOUND", "El recurso solicitado no existe");
+    }
+
+    /**
+     * Conflicto con el estado actual (duplicados, solapamientos): HTTP 409.
+     *
+     * @param ex excepción de negocio.
+     * @return respuesta HTTP 409.
+     */
+    @ExceptionHandler(ConflictException.class)
+    public ResponseEntity<ErrorResponse> handleConflict(ConflictException ex) {
+        return construir(HttpStatus.CONFLICT, "CONFLICT", ex.getMessage());
+    }
+
+    /**
+     * Credenciales inválidas: HTTP 401.
+     *
+     * @param ex excepción de autenticación.
+     * @return respuesta HTTP 401.
+     */
+    @ExceptionHandler(UnauthorizedException.class)
+    public ResponseEntity<ErrorResponse> handleUnauthorized(UnauthorizedException ex) {
+        return construir(HttpStatus.UNAUTHORIZED, "UNAUTHORIZED", ex.getMessage());
+    }
+
+    /**
+     * Permiso denegado por {@code @PreAuthorize} u otra regla de método: HTTP 403.
+     *
+     * @param ex excepción de Spring Security.
+     * @return respuesta HTTP 403.
+     */
+    @ExceptionHandler(AccessDeniedException.class)
+    public ResponseEntity<ErrorResponse> handleAccessDenied(AccessDeniedException ex) {
+        return construir(HttpStatus.FORBIDDEN, "FORBIDDEN", "Su perfil no tiene permiso para esta operación");
+    }
+
+    /**
+     * Falla de validación de un cuerpo con {@code @Valid}: HTTP 400 con el primer error.
+     *
+     * @param ex excepción de validación.
+     * @return respuesta HTTP 400.
+     */
+    @ExceptionHandler(MethodArgumentNotValidException.class)
+    public ResponseEntity<ErrorResponse> handleValidation(MethodArgumentNotValidException ex) {
+        String mensaje = ex.getBindingResult().getFieldErrors().stream()
+                .map(e -> e.getDefaultMessage())
+                .findFirst().orElse("Datos inválidos");
+        return construir(HttpStatus.BAD_REQUEST, "BAD REQUEST", mensaje);
+    }
+
+    /**
+     * Archivo adjunto demasiado grande: HTTP 400.
+     *
+     * @param ex excepción de carga.
+     * @return respuesta HTTP 400.
+     */
+    @ExceptionHandler(MaxUploadSizeExceededException.class)
+    public ResponseEntity<ErrorResponse> handleMaxUpload(MaxUploadSizeExceededException ex) {
+        return construir(HttpStatus.BAD_REQUEST, "BAD REQUEST", "El archivo supera el tamaño máximo permitido");
+    }
+
+    private ResponseEntity<ErrorResponse> construir(HttpStatus status, String error, String mensaje) {
+        return ResponseEntity.status(status).body(new ErrorResponse(status.value(), error, mensaje));
     }
 
     /**

@@ -27,4 +27,15 @@ public class MedicoServiceImpl implements MedicoService {
     public List<Medico> obtenerMedicos() {
         return medicoRepository.findAll();
     }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public Medico cambiarEstado(Long id, boolean activo) {
+        Medico e = medicoRepository.findById(id)
+                .orElseThrow(() -> new com.uniminuto.clinica.exception.NotFoundException("El registro <built-in function id> no existe".replace("{id}", String.valueOf(id))));
+        e.setActivo(activo);
+        return medicoRepository.save(e);
+    }
 }

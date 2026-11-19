@@ -15,4 +15,13 @@ public interface MedicoService {
      * @return lista completa.
      */
     List<Medico> obtenerMedicos();
+
+    /**
+     * Activa o inactiva el registro (no se elimina para conservar el histórico).
+     *
+     * @param id     identificador.
+     * @param activo nuevo estado.
+     * @return registro actualizado.
+     */
+    Medico cambiarEstado(Long id, boolean activo);
 }

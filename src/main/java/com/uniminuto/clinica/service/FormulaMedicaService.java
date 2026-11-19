@@ -6,49 +6,56 @@ import com.uniminuto.clinica.models.FormulaMedicaRq;
 import com.uniminuto.clinica.models.MiRespuestaRS;
 
 import java.util.List;
+import java.util.Map;
 
 /**
- * Servicio de negocio para la gestión de fórmulas médicas (prescripciones).
+ * Fórmulas médicas. Crear una fórmula NO descuenta inventario; solo genera el despacho pendiente.
  */
 public interface FormulaMedicaService {
 
     /**
-     * Lista todas las fórmulas médicas registradas, ordenadas de la más reciente
-     * a la más antigua según su fecha de creación.
-     *
-     * @return lista completa de fórmulas médicas.
-     * @throws BadRequestException si ocurre un error al procesar la solicitud.
+     * @param citaId    filtro opcional por cita.
+     * @param mascotaId filtro opcional por mascota.
+     * @return fórmulas.
      */
-    List<FormulaMedica> listarFormulasMedicas() throws BadRequestException;
+    List<FormulaMedica> listarFormulasMedicas(Long citaId, Integer mascotaId);
 
     /**
-     * Consulta una fórmula médica específica por su identificador.
-     *
-     * @param formulaId identificador de la fórmula médica.
-     * @return la fórmula médica encontrada.
-     * @throws BadRequestException si el identificador es inválido o la fórmula no existe.
+     * @param formulaId fórmula.
+     * @return la fórmula con sus medicamentos.
+     * @throws BadRequestException si el id es inválido.
      */
     FormulaMedica consultarFormulaMedica(Long formulaId) throws BadRequestException;
 
     /**
-     * Registra una nueva fórmula médica, validando que la mascota exista y pertenezca
-     * a un cliente registrado, que la cita exista, corresponda a la mascota, esté atendida, que el medicamento esté vigente y que la dosis,
-     * frecuencia, duración y fecha de emisión sean válidas.
+     * Emite una fórmula con varios medicamentos y crea su despacho pendiente.
      *
-     * @param formulaMedicaRq datos de la fórmula médica a registrar.
-     * @return respuesta con el resultado de la operación.
-     * @throws BadRequestException si los datos son inválidos o incumplen las reglas de negocio.
+     * @param rq datos.
+     * @return respuesta con el id de la fórmula en el mensaje.
+     * @throws BadRequestException si falla una validación.
      */
-    MiRespuestaRS guardarFormulaMedica(FormulaMedicaRq formulaMedicaRq) throws BadRequestException;
+    MiRespuestaRS guardarFormulaMedica(FormulaMedicaRq rq) throws BadRequestException;
 
     /**
-     * Actualiza una fórmula médica existente aplicando las mismas reglas de negocio
-     * que el registro.
+     * Edita una fórmula mientras su despacho siga PENDIENTE_DESPACHO.
      *
-     * @param formulaMedicaRq datos actualizados de la fórmula médica.
-     * @return respuesta con el resultado de la operación.
-     * @throws BadRequestException si los datos son inválidos, la fórmula no existe
-     *                             o incumple las reglas de negocio.
+     * @param rq datos con id.
+     * @return respuesta de éxito.
+     * @throws BadRequestException si falla una validación.
      */
-    MiRespuestaRS actualizarFormulaMedica(FormulaMedicaRq formulaMedicaRq) throws BadRequestException;
+    MiRespuestaRS actualizarFormulaMedica(FormulaMedicaRq rq) throws BadRequestException;
+
+    /**
+     * Disponibilidad de cada medicamento de la fórmula.
+     *
+     * @param formulaId fórmula.
+     * @return lista con medicamento, prescrito, stock vigente y si alcanza.
+     */
+    List<Map<String, Object>> disponibilidad(Long formulaId);
+
+    /**
+     * @param formulaId fórmula.
+     * @return PDF de la fórmula.
+     */
+    byte[] pdf(Long formulaId);
 }

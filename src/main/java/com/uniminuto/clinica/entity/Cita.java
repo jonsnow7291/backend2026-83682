@@ -67,4 +67,16 @@ public class Cita {
      */
     @Column(name = "motivo", columnDefinition = "TEXT")
     private String motivo;
+
+    /** Fin de la cita (inicio + duración). {@code fechaHora} es el inicio. */
+    @Column(name = "fecha_hora_fin")
+    private LocalDateTime fechaHoraFin;
+
+    /** Motivo de cancelación (la cita cancelada conserva su historial). */
+    @Column(name = "motivo_cancelacion", columnDefinition = "TEXT")
+    private String motivoCancelacion;
+
+    /** Especialidad con la que se atiende (la del médico al agendar). */
+    @Column(name = "especializacion_id")
+    private Long especializacionId;
 }

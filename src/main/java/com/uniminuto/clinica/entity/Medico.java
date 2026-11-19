@@ -67,4 +67,14 @@ public class Medico {
      */
     @Column(name = "especializacion_id", nullable = false)
     private Integer especializacionId;
+
+    /**
+     * Usuario del sistema asociado al médico (para que vea solo sus citas); nulo si no tiene acceso.
+     */
+    @Column(name = "usuario_id")
+    private Long usuarioId;
+
+    /** Un médico inactivo no recibe citas. */
+    @Column(name = "activo", nullable = false)
+    private Boolean activo = true;
 }

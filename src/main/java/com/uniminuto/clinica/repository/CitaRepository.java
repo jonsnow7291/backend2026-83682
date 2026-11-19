@@ -62,4 +62,56 @@ public interface CitaRepository extends JpaRepository<Cita, Long> {
      * @return lista de citas de la mascota en el estado indicado.
      */
     List<Cita> findAllByMascota_MascotaIdAndEstadoIgnoreCaseOrderByFechaHoraDesc(Integer mascotaId, String estado);
+
+    /**
+     * Citas activas (no canceladas) del médico que se solapan con el intervalo dado.
+     *
+     * @param medicoId médico. @param inicio inicio. @param fin fin. @param excluir id a excluir (o -1).
+     * @return citas en conflicto.
+     */
+    @org.springframework.data.jpa.repository.Query("select c from Cita c where c.medico.id = :m and c.estado <> 'CANCELADA' and c.fechaHora < :fin and c.fechaHoraFin > :ini and c.id <> :ex")
+    List<Cita> solapadasMedico(@org.springframework.data.repository.query.Param("m") Long medicoId,
+                               @org.springframework.data.repository.query.Param("ini") LocalDateTime inicio,
+                               @org.springframework.data.repository.query.Param("fin") LocalDateTime fin,
+                               @org.springframework.data.repository.query.Param("ex") Long excluir);
+
+    /**
+     * Citas activas (no canceladas) de la mascota que se solapan con el intervalo dado.
+     *
+     * @param mascotaId mascota. @param inicio inicio. @param fin fin. @param excluir id a excluir (o -1).
+     * @return citas en conflicto.
+     */
+    @org.springframework.data.jpa.repository.Query("select c from Cita c where c.mascota.mascotaId = :m and c.estado <> 'CANCELADA' and c.fechaHora < :fin and c.fechaHoraFin > :ini and c.id <> :ex")
+    List<Cita> solapadasMascota(@org.springframework.data.repository.query.Param("m") Integer mascotaId,
+                                @org.springframework.data.repository.query.Param("ini") LocalDateTime inicio,
+                                @org.springframework.data.repository.query.Param("fin") LocalDateTime fin,
+                                @org.springframework.data.repository.query.Param("ex") Long excluir);
+
+    /**
+     * Citas en un rango, opcionalmente de un solo médico.
+     *
+     * @param medicoId médico o {@code null} para todos. @param desde inicio. @param hasta fin.
+     * @return citas ordenadas por fecha.
+     */
+    @org.springframework.data.jpa.repository.Query("select c from Cita c where (:m is null or c.medico.id = :m) and c.fechaHora >= :d and c.fechaHora < :h order by c.fechaHora")
+    List<Cita> enRango(@org.springframework.data.repository.query.Param("m") Long medicoId,
+                       @org.springframework.data.repository.query.Param("d") LocalDateTime desde,
+                       @org.springframework.data.repository.query.Param("h") LocalDateTime hasta);
+
+    /**
+     * Historial completo de citas de una mascota.
+     *
+     * @param mascotaId mascota.
+     * @return citas, la más reciente primero.
+     */
+    List<Cita> findAllByMascota_MascotaIdOrderByFechaHoraDesc(Integer mascotaId);
+
+    /**
+     * Bloquea la cita para escritura (serializa operaciones concurrentes sobre ella).
+     *
+     * @param id cita. @return cita bloqueada.
+     */
+    @org.springframework.data.jpa.repository.Lock(jakarta.persistence.LockModeType.PESSIMISTIC_WRITE)
+    @org.springframework.data.jpa.repository.Query("select c from Cita c where c.id = :id")
+    java.util.Optional<Cita> bloquear(@org.springframework.data.repository.query.Param("id") Long id);
 }

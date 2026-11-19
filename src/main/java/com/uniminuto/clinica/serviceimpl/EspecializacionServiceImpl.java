@@ -27,4 +27,15 @@ public class EspecializacionServiceImpl implements EspecializacionService {
     public List<Especializacion> obtenerEspecializaciones() {
         return especializacionRepository.findAll();
     }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public Especializacion cambiarEstado(Long id, boolean activo) {
+        Especializacion e = especializacionRepository.findById(id)
+                .orElseThrow(() -> new com.uniminuto.clinica.exception.NotFoundException("El registro <built-in function id> no existe".replace("{id}", String.valueOf(id))));
+        e.setActiva(activo);
+        return especializacionRepository.save(e);
+    }
 }

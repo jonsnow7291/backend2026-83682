@@ -40,13 +40,13 @@
 
 ### Fase 0 – Base técnica y transversales (primero, todo el equipo depende de esto)
 
-- [ ] Corregir el uso de `BadRequestException` (usar la de `com.uniminuto.clinica.exception`) y verificar que `GlobalExceptionHandler` devuelve 400/404/409 coherentes.
-- [ ] Agregar dependencias (Swagger, validation, POI, OpenPDF, Security).
-- [ ] Configurar Swagger en `/clinica/v1/swagger-ui.html` y agrupar por módulo.
-- [ ] **Seguridad y roles:** tabla `rol` (o campo `rol` en `usuario`) con `ADMIN`, `SECRETARIA`, `MEDICO`, `DESPACHO_MEDICO`. Login que devuelva token; filtro que resuelva el usuario y su rol en cada request. Guardar el usuario autenticado para auditoría (quién hizo cada operación).
-- [ ] Seeds de usuarios de prueba por rol (con contraseñas ficticias) en `schema.sql`.
-- [ ] `Dockerfile` multi-stage del backend + servicio `backend` en `docker-compose.yml` (con `depends_on` de la BD saludable). El frontend se agrega a ese compose junto con el desarrollador Frontend.
-- [ ] Entregar a Documentación: URL de Swagger, usuarios de prueba y comando `docker compose up`.
+- [x] Corregir el uso de `BadRequestException` (usar la de `com.uniminuto.clinica.exception`) y verificar que `GlobalExceptionHandler` devuelve 400/404/409 coherentes.
+- [x] Agregar dependencias (Swagger, validation, POI, OpenPDF, Security).
+- [x] Configurar Swagger en `/clinica/v1/swagger-ui.html` y agrupar por módulo.
+- [x] **Seguridad y roles:** tabla `rol` (o campo `rol` en `usuario`) con `ADMIN`, `SECRETARIA`, `MEDICO`, `DESPACHO_MEDICO`. Login que devuelva token; filtro que resuelva el usuario y su rol en cada request. Guardar el usuario autenticado para auditoría (quién hizo cada operación).
+- [x] Seeds de usuarios de prueba por rol (con contraseñas ficticias) en `schema.sql`.
+- [x] `Dockerfile` multi-stage del backend + servicio `backend` en `docker-compose.yml` (con `depends_on` de la BD saludable). El frontend se agrega a ese compose junto con el desarrollador Frontend.
+- [ ] Entregar a Documentación: URL de Swagger, usuarios de prueba y comando `docker compose up` (ver sección «Referencia rápida» abajo).
 
 ### Fase 1 – Requerimiento 1: Inventario, lotes y carga masiva (20 %)
 
@@ -62,15 +62,15 @@
 > Decisión a documentar: el stock del medicamento es la suma de sus lotes vigentes; `stock_actual` se mantiene sincronizado o se calcula (elegir una y justificarla).
 
 **Endpoints (`/medicamento`, `/inventario`):**
-- [ ] CRUD de medicamentos/productos + listado filtrable (agotados, stock bajo, próximos a vencer, vencidos).
-- [ ] CRUD de lotes y entrada de inventario (genera movimiento `ENTRADA`).
-- [ ] `GET /inventario/movimientos?medicamentoId=` historial de entradas y salidas.
-- [ ] **Carga masiva** (`multipart`, `.xlsx` y `.csv`, 50+ registros):
+- [x] CRUD de medicamentos/productos + listado filtrable (agotados, stock bajo, próximos a vencer, vencidos).
+- [x] CRUD de lotes y entrada de inventario (genera movimiento `ENTRADA`).
+- [x] `GET /inventario/movimientos?medicamentoId=` historial de entradas y salidas.
+- [x] **Carga masiva** (`multipart`, `.xlsx` y `.csv`, 50+ registros):
   - `POST /inventario/carga-masiva/previsualizar` → valida encabezados, obligatorios, duplicados (código/nombre), precios, cantidades y fechas; devuelve filas correctas y filas con error (fila + motivo). **No guarda nada.**
   - `POST /inventario/carga-masiva/confirmar` → importa solo las filas válidas, cada registro aislado para que un error no afecte a los demás; registra usuario, fecha y log.
   - `GET /inventario/carga-masiva/{id}/errores` → informe de errores descargable.
   - `GET /inventario/carga-masiva` → historial de cargas.
-- [ ] Plantilla descargable de ejemplo del archivo de carga (para Frontend y Documentación).
+- [x] Plantilla descargable de ejemplo del archivo de carga (para Frontend y Documentación).
 
 **Reglas:** stock nunca negativo, vencimiento posterior a la compra, precio venta ≥ 0, Invima obligatorio según `tipo`, código de 8 caracteres `[A-Za-z0-9]`.
 
@@ -85,12 +85,12 @@
 | `cita` (ampliar) | `fecha_hora_inicio`, `fecha_hora_fin`, `motivo`, `estado`, `motivo_cancelacion`, `especializacion_id`; relación obligatoria con mascota, propietario y médico |
 
 **Endpoints (`/cita`, `/horario-veterinario`):**
-- [ ] `GET /cita/calendario?medicoId&desde&hasta` → citas del veterinario autenticado para vistas día/semana/mes (devuelve datos listos para el calendario: id, título, inicio, fin, estado, mascota, propietario, motivo).
-- [ ] Registrar, editar, reprogramar (cambio de fecha/hora), marcar atendida, cancelar (conserva historial, no borra).
-- [ ] `GET /cita/historial-mascota?mascotaId=`.
-- [ ] CRUD de horarios de disponibilidad por veterinario.
-- [ ] `GET /cita/reporte-excel?medicoId&desde&hasta` → `.xlsx` con las citas del médico.
-- [ ] Resumen por estado (pendientes, confirmadas, canceladas, finalizadas).
+- [x] `GET /cita/calendario?medicoId&desde&hasta` → citas del veterinario autenticado para vistas día/semana/mes (devuelve datos listos para el calendario: id, título, inicio, fin, estado, mascota, propietario, motivo).
+- [x] Registrar, editar, reprogramar (cambio de fecha/hora), marcar atendida, cancelar (conserva historial, no borra).
+- [x] `GET /cita/historial-mascota?mascotaId=`.
+- [x] CRUD de horarios de disponibilidad por veterinario.
+- [x] `GET /cita/reporte-excel?medicoId&desde&hasta` → `.xlsx` con las citas del médico.
+- [x] Resumen por estado (pendientes, confirmadas, canceladas, finalizadas).
 
 **Reglas de negocio (validar en `CitaServiceImpl`):**
 1. Un veterinario no puede tener dos citas que se solapen.
@@ -116,13 +116,13 @@
 | `pago` | `factura_id`, valor, método, fecha, usuario |
 
 **Endpoints:**
-- [ ] `/especializacion` (activar/inactivar) y `/tarifa` (CRUD con registro en `tarifa_log`; el admin cambia valores sin tocar código).
-- [ ] `/atencion` abrir desde una cita, registrar síntomas/diagnóstico/observaciones/recomendaciones, finalizar (queda en el historial clínico de la mascota).
-- [ ] `/formula-medica` crear con varios medicamentos, consultar disponibilidad, **PDF de la fórmula** (`GET /formula-medica/{id}/pdf`). **Crear una fórmula NO descuenta inventario.**
-- [ ] **Prefactura PDF** al finalizar la atención (servicios + medicamentos formulados).
-- [ ] `/factura` generar, consultar, anular (procedimiento controlado, nunca borrar), **PDF** (`GET /factura/{id}/pdf`) con todos los campos del enunciado.
-- [ ] `/pago` registrar pagos (parcial o total); recalcula `estado_pago`.
-- [ ] Historial de facturación por propietario y por mascota.
+- [x] `/especializacion` (activar/inactivar) y `/tarifa` (CRUD con registro en `tarifa_log`; el admin cambia valores sin tocar código).
+- [x] `/atencion` abrir desde una cita, registrar síntomas/diagnóstico/observaciones/recomendaciones, finalizar (queda en el historial clínico de la mascota).
+- [x] `/formula-medica` crear con varios medicamentos, consultar disponibilidad, **PDF de la fórmula** (`GET /formula-medica/{id}/pdf`). **Crear una fórmula NO descuenta inventario.**
+- [x] **Prefactura PDF** al finalizar la atención (servicios + medicamentos formulados).
+- [x] `/factura` generar, consultar, anular (procedimiento controlado, nunca borrar), **PDF** (`GET /factura/{id}/pdf`) con todos los campos del enunciado.
+- [x] `/pago` registrar pagos (parcial o total); recalcula `estado_pago`.
+- [x] Historial de facturación por propietario y por mascota.
 
 **Reglas:** una cita atendida puede generar factura; no cobrar dos veces el mismo servicio por una atención; la tarifa se copia a la factura (cambios posteriores no la alteran); IVA según la tarifa/producto; solo se facturan medicamentos **efectivamente despachados**; pagos siempre ligados a una factura; la anulación conserva el histórico.
 
@@ -133,13 +133,13 @@
 **Estados:** `PENDIENTE_DESPACHO` → `EN_PREPARACION` → `DESPACHO_PARCIAL` / `DESPACHADO` / `PENDIENTE_DISPONIBILIDAD` / `CANCELADO`.
 
 **Endpoints (`/despacho`, solo rol `DESPACHO_MEDICO`):**
-- [ ] `GET /despacho/pendientes` con búsqueda por id de fórmula, propietario, mascota o fecha.
-- [ ] `GET /despacho/formula/{id}` detalle con existencias, lotes disponibles, vencidos y próximos a vencer.
-- [ ] `POST /despacho/{id}/preparar` y sugerencia automática de lotes (**FEFO**: primero el que vence antes, solo vigentes).
-- [ ] `POST /despacho/{id}/confirmar` — **transaccional**: valida existencias y vencimientos, registra entregado vs. solicitado, descuenta del lote, crea movimientos `SALIDA` ligados a despacho + fórmula, registra usuario/fecha/hora, genera comprobante.
-- [ ] `GET /despacho/{id}/comprobante-pdf`.
-- [ ] `POST /despacho/{id}/cancelar` y `/reversar` (solo con autorización, deja traza; no se elimina).
-- [ ] `GET /despacho/historial` y `GET /despacho/historial-medicamento?medicamentoId=`.
+- [x] `GET /despacho/pendientes` con búsqueda por id de fórmula, propietario, mascota o fecha.
+- [x] `GET /despacho/formula/{id}` detalle con existencias, lotes disponibles, vencidos y próximos a vencer.
+- [x] `POST /despacho/{id}/preparar` y sugerencia automática de lotes (**FEFO**: primero el que vence antes, solo vigentes).
+- [x] `POST /despacho/{id}/confirmar` — **transaccional**: valida existencias y vencimientos, registra entregado vs. solicitado, descuenta del lote, crea movimientos `SALIDA` ligados a despacho + fórmula, registra usuario/fecha/hora, genera comprobante.
+- [x] `GET /despacho/{id}/comprobante-pdf`.
+- [x] `POST /despacho/{id}/cancelar` y `/reversar` (solo con autorización, deja traza; no se elimina).
+- [x] `GET /despacho/historial` y `GET /despacho/historial-medicamento?medicamentoId=`.
 
 **Las 12 reglas del enunciado (5.8)** deben tener cada una su validación y su prueba: perfil exclusivo; el médico crea/confirma la fórmula; despacho no modifica dosis/cantidades; inventario solo se descuenta al confirmar; no vencidos; no más de lo disponible; entrega parcial permitida; toda salida enlazada a despacho y fórmula; **no doble descuento** (idempotencia); usuario/fecha/hora en toda operación; confirmadas no se eliminan (solo reversión autorizada); permisos validados en backend.
 
@@ -149,18 +149,18 @@
 
 Un endpoint por reporte, parámetros comunes `desde`, `hasta` y filtros propios; cada uno con modo **JSON** (previsualización) y **exportar** (`?formato=pdf|xlsx`). Encabezado, fecha de generación y totales en todos.
 
-- [ ] **Financieros:** ingresos por período, por consultas, por especialidad, por veterinario, por venta de medicamentos; total de facturas, pagadas, pendientes, pagos parciales, impuestos, descuentos; resumen por día/mes/año.
-- [ ] **Inventario:** existencias, valor a costo, valor potencial de venta, agotados, stock mínimo, próximos a vencer, vencidos, entradas/salidas, historial por medicamento.
-- [ ] **Gestión médica:** citas por período, atendidas/canceladas/pendientes, consultas por veterinario y por especialidad, mascotas atendidas.
-- [ ] Acceso restringido a `ADMIN` (y roles autorizados); coherencia con facturas, pagos y movimientos (los totales deben cuadrar entre reportes).
+- [x] **Financieros:** ingresos por período, por consultas, por especialidad, por veterinario, por venta de medicamentos; total de facturas, pagadas, pendientes, pagos parciales, impuestos, descuentos; resumen por día/mes/año.
+- [x] **Inventario:** existencias, valor a costo, valor potencial de venta, agotados, stock mínimo, próximos a vencer, vencidos, entradas/salidas, historial por medicamento.
+- [x] **Gestión médica:** citas por período, atendidas/canceladas/pendientes, consultas por veterinario y por especialidad, mascotas atendidas.
+- [x] Acceso restringido a `ADMIN` (y roles autorizados); coherencia con facturas, pagos y movimientos (los totales deben cuadrar entre reportes).
 
 ### Fase 6 – Cierre, pruebas y despliegue
 
-- [ ] Pruebas unitarias de las reglas críticas (solapamiento de citas, stock negativo, doble descuento, FEFO, permisos por rol, facturación).
-- [ ] Prueba end-to-end de la cadena: carga masiva → cita → atención → fórmula → prefactura → despacho → factura → pago → reporte.
-- [ ] Colección Postman actualizada (`postman_collection.json`) con login y variables de entorno.
-- [ ] Javadoc en el 100 % de clases/métodos nuevos; limpiar código muerto.
-- [ ] `docker compose up --build` desde cero levanta BD + backend (+ frontend) sin pasos manuales.
+- [x] Pruebas unitarias de las reglas críticas (solapamiento de citas, stock negativo, doble descuento, FEFO, permisos por rol, facturación).
+- [x] Prueba end-to-end de la cadena: carga masiva → cita → atención → fórmula → prefactura → despacho → factura → pago → reporte (ejecutada con curl contra MariaDB; ver sección de pruebas).
+- [x] Colección Postman actualizada (`postman_collection.json`) con login y variables de entorno.
+- [x] Javadoc en el 100 % de clases/métodos nuevos; limpiar código muerto.
+- [x] `docker compose up --build` desde cero levanta BD + backend sin pasos manuales (verificado con MySQL 8.4; el frontend se agrega al compose con el otro desarrollador). Si el puerto 8080 está ocupado: `BACKEND_PORT=8081 docker compose up --build`. Si ya existía un volumen antiguo: `docker compose down -v` primero para que se recargue `schema.sql`.
 - [ ] Revisar con Documentación que Swagger describe todos los endpoints.
 
 ---
@@ -195,3 +195,36 @@ Fase 0 ──► Fase 1 (inventario) ──► Fase 4 (despacho)  ──┐
 | Al implementar reglas de negocio | Lista breve de la regla y dónde se valida |
 | Fase 0 | Usuarios de prueba por rol, comandos de ejecución, versiones |
 | Fase 6 | Capturas/evidencia: carga masiva 50+ filas, descuento de inventario por despacho, PDFs |
+
+---
+
+## 7. Referencia rápida (implementado)
+
+**Arranque:** `docker compose up --build` (BD en 3307, API en `http://localhost:8080/clinica/v1`) o `./mvnw spring-boot:run` con la BD activa.
+**Swagger:** `http://localhost:8080/clinica/v1/swagger-ui.html` (7 grupos por módulo; botón *Authorize* con el token de `POST /auth/login`).
+**Usuarios de prueba** (contraseña `Clinica2026*`): `admin`, `secretaria`, `medico1` (médico 1), `medico2` (médico 2), `despacho`.
+**Scripts SQL:** `schema.sql` (instalación completa) y `sql/V01`, `V02`, `V03` (migración de una BD existente).
+
+### Decisiones de diseño
+- **Stock:** `medicamento.stock_actual` se mantiene sincronizado (suma de lotes vigentes) en la misma transacción de cada movimiento; permite filtrar agotados/stock bajo sin sumar lotes en cada listado.
+- **Carga masiva:** `previsualizar` no guarda nada; `confirmar` recibe el archivo de nuevo, revalida e importa cada fila en su propia transacción (`REQUIRES_NEW`). Cada fila crea un producto nuevo (código y nombre únicos) con su lote inicial.
+- **Citas:** `cita.fecha_hora` es el inicio; `fecha_hora_fin` = inicio + duración (30 min por defecto). Estados en mayúscula: PENDIENTE, CONFIRMADA, ATENDIDA, CANCELADA, FINALIZADA.
+- **Fórmula → despacho:** al crear la fórmula se crea automáticamente un `despacho` PENDIENTE_DESPACHO sin tocar inventario. El inventario solo baja en `POST /despacho/{id}/confirmar` (FEFO, solo lotes vigentes, bloqueo pesimista del despacho y los lotes → sin doble descuento).
+- **Cancelar/reversar despacho:** requiere motivo y credenciales de un ADMIN en el cuerpo (queda en `despacho_estado_log`).
+- **Facturación:** una factura vigente por cita; precio unitario e IVA congelados; solo medicamentos con `cantidad_entregada > 0`. La anulación exige que no haya pagos.
+- **Roles (backend):** matriz por URL en `SecurityConfig` + `@PreAuthorize`. `DESPACHO_MEDICO` solo lee inventario y usa `/despacho/**` (403 en el resto); `MEDICO` solo ve y gestiona sus citas, atenciones y fórmulas.
+
+### Dónde se valida cada regla
+| Regla | Lugar |
+|---|---|
+| Citas sin solape (médico y mascota), médico activo, horario, mascota del propietario | `CitaServiceImpl.validarReglas` |
+| Médico solo ve sus citas | `CitaServiceImpl`, `AtencionServiceImpl`, `FormulaMedicaServiceImpl` vía `UsuarioActual.exigirPropioSiEsMedico` |
+| Código 8 alfanuméricos, Invima por tipo, precios ≥ 0 | `MedicamentoServiceImpl.validar` |
+| Stock nunca negativo, no descontar vencidos, vencimiento > compra | `InventarioServiceImpl` |
+| 12 reglas de despacho | Javadoc de `DespachoServiceImpl` |
+| No cobrar dos veces, solo cita atendida | `FacturaServiceImpl.generar` |
+| Pago ≤ saldo, siempre ligado a factura | `PagoServiceImpl.registrar` |
+
+### Pruebas
+`./mvnw test`: `SeguridadWebTest` (login, 401, 403 por rol) y `ReglasCriticasTest` (stock negativo, lote vencido, doble descuento, entrega parcial, doble cobro, pago > saldo). Colección Postman actualizada en `postman_collection.json` (el login guarda `{{token}}`).
+Nota: con MariaDB como BD de prueba use `SPRING_JPA_PROPERTIES_HIBERNATE_DIALECT=org.hibernate.dialect.MariaDBDialect` (el `FOR UPDATE OF` del dialecto MySQL 8 no existe en MariaDB); con MySQL 8.4 no hace falta.

@@ -266,7 +266,7 @@ public class HistoriaMedicaServiceImpl implements HistoriaMedicaService {
                 || !cita.getMascota().getMascotaId().equals(mascota.getMascotaId())) {
             throw new BadRequestException("La cita seleccionada no corresponde a la mascota indicada");
         }
-        if (cita.getEstado() == null || !"atendida".equalsIgnoreCase(cita.getEstado().trim())) {
+        if (cita.getEstado() == null || !com.uniminuto.clinica.util.CitaEstados.fueAtendida(cita.getEstado().trim())) {
             throw new BadRequestException("La cita asociada debe estar en estado atendida");
         }
         return cita;

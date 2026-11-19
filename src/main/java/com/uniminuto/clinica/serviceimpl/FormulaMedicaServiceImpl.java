@@ -2,262 +2,216 @@ package com.uniminuto.clinica.serviceimpl;
 
 import com.uniminuto.clinica.entity.Cita;
 import com.uniminuto.clinica.entity.FormulaMedica;
-import com.uniminuto.clinica.entity.Mascota;
+import com.uniminuto.clinica.entity.FormulaMedicaDetalle;
 import com.uniminuto.clinica.entity.Medicamento;
 import com.uniminuto.clinica.exception.BadRequestException;
+import com.uniminuto.clinica.exception.NotFoundException;
 import com.uniminuto.clinica.models.FormulaMedicaRq;
 import com.uniminuto.clinica.models.MiRespuestaRS;
+import com.uniminuto.clinica.repository.AtencionRepository;
 import com.uniminuto.clinica.repository.CitaRepository;
+import com.uniminuto.clinica.repository.DespachoRepository;
 import com.uniminuto.clinica.repository.FormulaMedicaRepository;
-import com.uniminuto.clinica.repository.MascotaRepository;
+import com.uniminuto.clinica.repository.LoteRepository;
 import com.uniminuto.clinica.repository.MedicamentoRepository;
+import com.uniminuto.clinica.security.UsuarioActual;
+import com.uniminuto.clinica.service.DespachoService;
 import com.uniminuto.clinica.service.FormulaMedicaService;
+import com.uniminuto.clinica.util.CitaEstados;
+import com.uniminuto.clinica.util.PdfBuilder;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
- * Implementación de {@link FormulaMedicaService} usando Spring Data JPA.
+ * Implementación de fórmulas médicas. Reglas: solo sobre citas atendidas; el médico de la cita
+ * (o un ADMIN) la emite; solo medicamentos activos de tipo MEDICAMENTO; crear/editar no toca el
+ * inventario; no se edita una vez que el despacho dejó de estar PENDIENTE_DESPACHO.
  */
 @Service
 public class FormulaMedicaServiceImpl implements FormulaMedicaService {
 
-    /**
-     * Duración máxima permitida para un tratamiento, en días.
-     */
-    private static final int DURACION_MAXIMA_DIAS = 365;
+    @Autowired private FormulaMedicaRepository formulaRepository;
+    @Autowired private CitaRepository citaRepository;
+    @Autowired private MedicamentoRepository medicamentoRepository;
+    @Autowired private AtencionRepository atencionRepository;
+    @Autowired private DespachoRepository despachoRepository;
+    @Autowired private LoteRepository loteRepository;
+    @Autowired private DespachoService despachoService;
+    @Autowired private UsuarioActual usuarioActual;
 
-    /**
-     * Longitud máxima permitida para la frecuencia de administración.
-     */
-    private static final int LONGITUD_MAXIMA_FRECUENCIA = 100;
-
-    /**
-     * Estado que debe tener una cita para poder emitir una fórmula sobre ella.
-     */
-    private static final String ESTADO_CITA_ATENDIDA = "atendida";
-
-    /**
-     * Repositorio JPA para el acceso a datos de fórmulas médicas.
-     */
-    @Autowired
-    private FormulaMedicaRepository formulaMedicaRepository;
-
-    /**
-     * Repositorio JPA para el acceso a datos de citas, usado para validar la
-     * consulta en la que se emite la fórmula.
-     */
-    @Autowired
-    private CitaRepository citaRepository;
-
-    /**
-     * Repositorio JPA para el acceso a datos de mascotas, usado para validar que la
-     * mascota exista y pertenezca a un cliente registrado.
-     */
-    @Autowired
-    private MascotaRepository mascotaRepository;
-
-    /**
-     * Repositorio JPA para el acceso a datos de medicamentos, usado para validar
-     * el medicamento prescrito.
-     */
-    @Autowired
-    private MedicamentoRepository medicamentoRepository;
-
-    /**
-     * {@inheritDoc}
-     */
+    /** {@inheritDoc} */
     @Override
-    public List<FormulaMedica> listarFormulasMedicas() throws BadRequestException {
-        return this.formulaMedicaRepository.findAllByOrderByFechaCreacionRegistroDesc();
+    public List<FormulaMedica> listarFormulasMedicas(Long citaId, Integer mascotaId) {
+        List<FormulaMedica> base = citaId != null ? formulaRepository.findAllByCita_IdOrderByIdAsc(citaId)
+                : mascotaId != null ? formulaRepository.findAllByCita_Mascota_MascotaIdOrderByFechaEmisionDesc(mascotaId)
+                : formulaRepository.findAllByOrderByFechaCreacionRegistroDesc();
+        return base.stream().filter(this::visible).toList();
     }
 
-    /**
-     * {@inheritDoc}
-     */
+    private boolean visible(FormulaMedica f) {
+        try {
+            usuarioActual.exigirPropioSiEsMedico(f.getCita().getMedico().getId());
+            return true;
+        } catch (org.springframework.security.access.AccessDeniedException e) {
+            return false;
+        } catch (RuntimeException e) {
+            return true;
+        }
+    }
+
+    /** {@inheritDoc} */
     @Override
     public FormulaMedica consultarFormulaMedica(Long formulaId) throws BadRequestException {
         if (formulaId == null || formulaId <= 0) {
-            throw new BadRequestException("El id de la formula medica no puede ser nulo o negativo");
+            throw new BadRequestException("El identificador de la fórmula es obligatorio");
         }
-        return this.formulaMedicaRepository.findById(formulaId)
-                .orElseThrow(() -> new BadRequestException("La formula medica seleccionada no es valida"));
+        FormulaMedica f = formulaRepository.findById(formulaId)
+                .orElseThrow(() -> new NotFoundException("La fórmula " + formulaId + " no existe"));
+        usuarioActual.exigirPropioSiEsMedico(f.getCita().getMedico().getId());
+        return f;
     }
 
-    /**
-     * {@inheritDoc}
-     */
+    /** {@inheritDoc} */
     @Override
-    public MiRespuestaRS guardarFormulaMedica(FormulaMedicaRq formulaMedicaRq) throws BadRequestException {
-        this.validarFormulaMedicaRq(formulaMedicaRq);
-
-        FormulaMedica formulaMedica = new FormulaMedica();
-        this.asignarDatosValidados(formulaMedica, formulaMedicaRq);
-        formulaMedica.setFechaCreacionRegistro(LocalDateTime.now());
-
-        this.formulaMedicaRepository.save(formulaMedica);
-
-        MiRespuestaRS respuesta = new MiRespuestaRS();
-        respuesta.setStatus(200);
-        respuesta.setMessage("Formula medica guardada exitosamente");
-        return respuesta;
+    @Transactional
+    public MiRespuestaRS guardarFormulaMedica(FormulaMedicaRq rq) throws BadRequestException {
+        if (rq == null || rq.getCitaId() == null) {
+            throw new BadRequestException("La cita es obligatoria");
+        }
+        Cita cita = citaRepository.findById(rq.getCitaId())
+                .orElseThrow(() -> new NotFoundException("La cita " + rq.getCitaId() + " no existe"));
+        usuarioActual.exigirPropioSiEsMedico(cita.getMedico().getId());
+        if (!CitaEstados.fueAtendida(cita.getEstado())) {
+            throw new BadRequestException("Solo se pueden emitir fórmulas sobre citas en estado ATENDIDA o FINALIZADA");
+        }
+        FormulaMedica f = new FormulaMedica();
+        f.setCita(cita);
+        f.setMedicoId(cita.getMedico().getId());
+        f.setAtencionId(atencionRepository.findByCitaId(cita.getId()).map(a -> a.getId()).orElse(null));
+        f.setIndicaciones(rq.getIndicaciones());
+        f.setUsuarioId(usuarioActual.id());
+        f.setFechaEmision(LocalDateTime.now());
+        f.setFechaCreacionRegistro(LocalDateTime.now());
+        cargarDetalles(f, rq);
+        f = formulaRepository.save(f);
+        despachoService.crearParaFormula(f);
+        MiRespuestaRS r = new MiRespuestaRS();
+        r.setStatus(200);
+        r.setMessage("Fórmula médica registrada exitosamente. Id: " + f.getId());
+        return r;
     }
 
-    /**
-     * {@inheritDoc}
-     */
+    /** {@inheritDoc} */
     @Override
-    public MiRespuestaRS actualizarFormulaMedica(FormulaMedicaRq formulaMedicaRq) throws BadRequestException {
-        this.validarFormulaMedicaRq(formulaMedicaRq);
-
-        FormulaMedica formulaExistente = this.consultarFormulaMedica(formulaMedicaRq.getFormulaId());
-        this.asignarDatosValidados(formulaExistente, formulaMedicaRq);
-        formulaExistente.setFechaActualizacionRegistro(LocalDateTime.now());
-
-        this.formulaMedicaRepository.save(formulaExistente);
-
-        MiRespuestaRS respuesta = new MiRespuestaRS();
-        respuesta.setStatus(200);
-        respuesta.setMessage("Formula medica actualizada exitosamente");
-        return respuesta;
+    @Transactional
+    public MiRespuestaRS actualizarFormulaMedica(FormulaMedicaRq rq) throws BadRequestException {
+        if (rq == null || rq.getFormulaId() == null) {
+            throw new BadRequestException("El id de la fórmula es obligatorio");
+        }
+        FormulaMedica f = consultarFormulaMedica(rq.getFormulaId());
+        var despacho = despachoRepository.findByFormulaId(f.getId()).orElseThrow();
+        if (!"PENDIENTE_DESPACHO".equals(despacho.getEstado())) {
+            throw new BadRequestException("La fórmula ya está en proceso de despacho (" + despacho.getEstado() + ") y no puede modificarse");
+        }
+        f.setIndicaciones(rq.getIndicaciones());
+        f.getDetalles().clear();
+        formulaRepository.saveAndFlush(f);
+        cargarDetalles(f, rq);
+        f.setFechaActualizacionRegistro(LocalDateTime.now());
+        f = formulaRepository.saveAndFlush(f);
+        despachoService.sincronizarConFormula(f);
+        MiRespuestaRS r = new MiRespuestaRS();
+        r.setStatus(200);
+        r.setMessage("Fórmula médica actualizada exitosamente.");
+        return r;
     }
 
-    /**
-     * Valida las referencias (cita y medicamento) y la fecha de emisión de la
-     * solicitud, y copia los datos a la fórmula médica indicada.
-     *
-     * @param formulaMedica   fórmula médica (nueva o existente) que recibe los datos.
-     * @param formulaMedicaRq datos de entrada ya validados en su formato.
-     * @throws BadRequestException si alguna referencia o la fecha de emisión no es válida.
-     */
-    private void asignarDatosValidados(FormulaMedica formulaMedica, FormulaMedicaRq formulaMedicaRq)
-            throws BadRequestException {
-        Mascota mascota = this.obtenerMascotaValida(formulaMedicaRq.getMascotaId());
-        Cita cita = this.obtenerCitaValida(formulaMedicaRq.getCitaId(), mascota.getMascotaId());
-
-        LocalDateTime fechaEmision = formulaMedicaRq.getFechaEmision() != null
-                ? formulaMedicaRq.getFechaEmision()
-                : LocalDateTime.now();
-        if (fechaEmision.isBefore(cita.getFechaHora())) {
-            throw new BadRequestException("La fecha de emision no puede ser anterior a la fecha de la consulta");
+    private void cargarDetalles(FormulaMedica f, FormulaMedicaRq rq) {
+        if (rq.getDetalles() == null || rq.getDetalles().isEmpty()) {
+            throw new BadRequestException("La fórmula debe incluir al menos un medicamento");
         }
-
-        Medicamento medicamento = this.obtenerMedicamentoVigente(
-                formulaMedicaRq.getMedicamentoId(), fechaEmision);
-
-        formulaMedica.setCita(cita);
-        formulaMedica.setMedicamento(medicamento);
-        formulaMedica.setDosis(formulaMedicaRq.getDosis().trim());
-        formulaMedica.setFrecuencia(formulaMedicaRq.getFrecuencia().trim());
-        formulaMedica.setDuracionDias(formulaMedicaRq.getDuracionDias());
-        formulaMedica.setIndicaciones(formulaMedicaRq.getIndicaciones() != null
-                ? formulaMedicaRq.getIndicaciones().trim()
-                : null);
-        formulaMedica.setFechaEmision(fechaEmision);
-    }
-
-    /**
-     * Valida que los datos de entrada de una fórmula médica sean correctos.
-     * El {@code formulaId} solo se valida cuando se envía (obligatorio al actualizar,
-     * lo verifica {@link #consultarFormulaMedica(Long)}).
-     *
-     * @param formulaMedicaRq datos a validar.
-     * @throws BadRequestException si algún dato obligatorio es nulo o inválido.
-     */
-    private void validarFormulaMedicaRq(FormulaMedicaRq formulaMedicaRq) throws BadRequestException {
-        if (formulaMedicaRq == null) {
-            throw new BadRequestException("El objeto FormulaMedicaRq no puede ser nulo");
-        }
-        if (formulaMedicaRq.getMascotaId() == null || formulaMedicaRq.getMascotaId() <= 0) {
-            throw new BadRequestException("El id de la mascota no puede ser nulo o negativo");
-        }
-        if (formulaMedicaRq.getCitaId() == null || formulaMedicaRq.getCitaId() <= 0) {
-            throw new BadRequestException("El id de la cita no puede ser nulo o negativo");
-        }
-        if (formulaMedicaRq.getMedicamentoId() == null || formulaMedicaRq.getMedicamentoId() <= 0) {
-            throw new BadRequestException("El id del medicamento no puede ser nulo o negativo");
-        }
-        if (formulaMedicaRq.getDosis() == null || formulaMedicaRq.getDosis().isBlank()) {
-            throw new BadRequestException("La dosis es obligatoria");
-        }
-        if (formulaMedicaRq.getFrecuencia() == null || formulaMedicaRq.getFrecuencia().isBlank()) {
-            throw new BadRequestException("La frecuencia de administracion es obligatoria");
-        }
-        if (formulaMedicaRq.getFrecuencia().trim().length() > LONGITUD_MAXIMA_FRECUENCIA) {
-            throw new BadRequestException("La frecuencia no puede superar los "
-                    + LONGITUD_MAXIMA_FRECUENCIA + " caracteres");
-        }
-        if (formulaMedicaRq.getDuracionDias() == null
-                || formulaMedicaRq.getDuracionDias() < 1
-                || formulaMedicaRq.getDuracionDias() > DURACION_MAXIMA_DIAS) {
-            throw new BadRequestException("La duracion del tratamiento debe estar entre 1 y "
-                    + DURACION_MAXIMA_DIAS + " dias");
+        List<Long> vistos = new ArrayList<>();
+        for (FormulaMedicaRq.Detalle d : rq.getDetalles()) {
+            if (d.getMedicamentoId() == null) {
+                throw new BadRequestException("Cada línea requiere un medicamento");
+            }
+            if (vistos.contains(d.getMedicamentoId())) {
+                throw new BadRequestException("El medicamento " + d.getMedicamentoId() + " está repetido en la fórmula");
+            }
+            vistos.add(d.getMedicamentoId());
+            Medicamento m = medicamentoRepository.findById(d.getMedicamentoId())
+                    .orElseThrow(() -> new BadRequestException("El medicamento " + d.getMedicamentoId() + " no existe"));
+            if (!"MEDICAMENTO".equals(m.getTipo()) || !Boolean.TRUE.equals(m.getActivo())) {
+                throw new BadRequestException("'" + m.getNombre() + "' no es un medicamento activo que pueda formularse");
+            }
+            if (d.getDosis() == null || d.getDosis().isBlank() || d.getFrecuencia() == null || d.getFrecuencia().isBlank()) {
+                throw new BadRequestException("Dosis y frecuencia son obligatorias para " + m.getNombre());
+            }
+            if (d.getDuracionDias() == null || d.getDuracionDias() <= 0) {
+                throw new BadRequestException("La duración debe ser mayor que cero para " + m.getNombre());
+            }
+            if (d.getCantidadPrescrita() == null || d.getCantidadPrescrita() <= 0) {
+                throw new BadRequestException("La cantidad prescrita debe ser mayor que cero para " + m.getNombre());
+            }
+            FormulaMedicaDetalle fd = new FormulaMedicaDetalle();
+            fd.setMedicamento(m);
+            fd.setDosis(d.getDosis().trim());
+            fd.setFrecuencia(d.getFrecuencia().trim());
+            fd.setDuracionDias(d.getDuracionDias());
+            fd.setCantidadPrescrita(d.getCantidadPrescrita());
+            fd.setViaAdministracion(d.getViaAdministracion());
+            fd.setIndicaciones(d.getIndicaciones());
+            f.getDetalles().add(fd);
         }
     }
 
-    /**
-     * Obtiene la mascota indicada validando que exista y que pertenezca a un cliente
-     * registrado (reglas 1 y 2 del módulo de fórmulas).
-     *
-     * @param mascotaId identificador de la mascota.
-     * @return la mascota encontrada.
-     * @throws BadRequestException si la mascota no existe o no tiene un cliente asociado.
-     */
-    private Mascota obtenerMascotaValida(Integer mascotaId) throws BadRequestException {
-        Mascota mascota = this.mascotaRepository.findById(mascotaId)
-                .orElseThrow(() -> new BadRequestException("La mascota seleccionada no existe"));
-        if (mascota.getCliente() == null || mascota.getCliente().getClienteId() == null) {
-            throw new BadRequestException("La mascota seleccionada no pertenece a un cliente registrado");
+    /** {@inheritDoc} */
+    @Override
+    public List<Map<String, Object>> disponibilidad(Long formulaId) {
+        FormulaMedica f = consultarFormulaMedica(formulaId);
+        List<Map<String, Object>> r = new ArrayList<>();
+        for (FormulaMedicaDetalle d : f.getDetalles()) {
+            long stock = loteRepository.stockVigente(d.getMedicamento().getId(), LocalDate.now());
+            Map<String, Object> m = new LinkedHashMap<>();
+            m.put("medicamentoId", d.getMedicamento().getId());
+            m.put("medicamento", d.getMedicamento().getNombre());
+            m.put("cantidadPrescrita", d.getCantidadPrescrita());
+            m.put("stockVigente", stock);
+            m.put("disponible", stock >= d.getCantidadPrescrita());
+            r.add(m);
         }
-        return mascota;
+        return r;
     }
 
-    /**
-     * Obtiene la cita indicada validando que exista, que corresponda a la mascota
-     * indicada, que se encuentre en estado {@code atendida} (la fórmula solo se
-     * emite sobre una consulta ya realizada) y que tenga un veterinario asignado.
-     *
-     * @param citaId    identificador de la cita.
-     * @param mascotaId identificador de la mascota a la que se prescribe.
-     * @return la cita encontrada.
-     * @throws BadRequestException si la cita no existe, es de otra mascota o no está atendida.
-     */
-    private Cita obtenerCitaValida(Long citaId, Integer mascotaId) throws BadRequestException {
-        Cita cita = this.citaRepository.findById(citaId)
-                .orElseThrow(() -> new BadRequestException("La cita seleccionada no es valida"));
-        if (cita.getMascota() == null
-                || cita.getMascota().getMascotaId() == null
-                || !cita.getMascota().getMascotaId().equals(mascotaId)) {
-            throw new BadRequestException("La cita seleccionada no corresponde a la mascota indicada");
+    /** {@inheritDoc} */
+    @Override
+    public byte[] pdf(Long formulaId) {
+        FormulaMedica f = consultarFormulaMedica(formulaId);
+        Cita c = f.getCita();
+        List<List<Object>> filas = new ArrayList<>();
+        for (FormulaMedicaDetalle d : f.getDetalles()) {
+            filas.add(List.of(d.getMedicamento().getNombre(), d.getDosis(), d.getFrecuencia(), d.getDuracionDias() + " días",
+                    d.getCantidadPrescrita(), d.getViaAdministracion() == null ? "-" : d.getViaAdministracion(),
+                    d.getIndicaciones() == null ? "" : d.getIndicaciones()));
         }
-        if (cita.getEstado() == null || !ESTADO_CITA_ATENDIDA.equalsIgnoreCase(cita.getEstado().trim())) {
-            throw new BadRequestException("Solo se pueden emitir formulas sobre citas en estado atendida");
-        }
-        if (cita.getMedico() == null || cita.getMedico().getId() == null) {
-            throw new BadRequestException("La cita seleccionada no tiene un veterinario registrado");
-        }
-        return cita;
-    }
-
-    /**
-     * Obtiene el medicamento indicado validando que exista y que no esté vencido
-     * en la fecha de emisión de la fórmula.
-     *
-     * @param medicamentoId identificador del medicamento.
-     * @param fechaEmision  fecha de emisión de la fórmula.
-     * @return el medicamento encontrado.
-     * @throws BadRequestException si el medicamento no existe o está vencido.
-     */
-    private Medicamento obtenerMedicamentoVigente(Long medicamentoId, LocalDateTime fechaEmision)
-            throws BadRequestException {
-        Medicamento medicamento = this.medicamentoRepository.findById(medicamentoId)
-                .orElseThrow(() -> new BadRequestException("El medicamento seleccionado no es valido"));
-        if (medicamento.getFechaVence() != null
-                && medicamento.getFechaVence().isBefore(fechaEmision.toLocalDate())) {
-            throw new BadRequestException("El medicamento seleccionado se encuentra vencido");
-        }
-        return medicamento;
+        return new PdfBuilder("FÓRMULA MÉDICA No. " + f.getId(), true)
+                .campo("Fecha de emisión", f.getFechaEmision().toLocalDate())
+                .campo("Propietario", c.getCliente().getNombres() + " " + c.getCliente().getApellidos())
+                .campo("Mascota", c.getMascota().getNombreMascota())
+                .campo("Veterinario", c.getMedico().getNombres() + " " + c.getMedico().getApellidos())
+                .campo("Registro profesional", c.getMedico().getRegistroProfesional())
+                .campo("Cita", c.getId())
+                .seccion("Medicamentos")
+                .tabla(List.of("Medicamento", "Dosis", "Frecuencia", "Duración", "Cantidad", "Vía", "Indicaciones"), filas)
+                .seccion("Indicaciones generales").texto(f.getIndicaciones())
+                .build();
     }
 }

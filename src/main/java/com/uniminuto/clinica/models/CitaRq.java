@@ -44,4 +44,9 @@ public class CitaRq {
      * Motivo de la cita.
      */
     private String motivo;
+
+    /**
+     * Duración en minutos (30 por defecto, entre 10 y 240).
+     */
+    private Integer duracionMinutos;
 }

@@ -18,4 +18,10 @@ public interface FormulaMedicaRepository extends JpaRepository<FormulaMedica, Lo
      * @return lista completa de fórmulas médicas ordenada descendentemente por fecha de creación.
      */
     List<FormulaMedica> findAllByOrderByFechaCreacionRegistroDesc();
+
+    /** @param citaId cita. @return fórmulas de la cita. */
+    List<FormulaMedica> findAllByCita_IdOrderByIdAsc(Long citaId);
+
+    /** @param mascotaId mascota. @return fórmulas de la mascota, más reciente primero. */
+    List<FormulaMedica> findAllByCita_Mascota_MascotaIdOrderByFechaEmisionDesc(Integer mascotaId);
 }

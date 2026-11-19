@@ -29,4 +29,12 @@ public class MedicoApiController implements MedicoApi {
     public ResponseEntity<List<Medico>> listarMedicos() throws BadRequestException {
         return ResponseEntity.ok(this.medicoService.obtenerMedicos());
     }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public ResponseEntity<Medico> cambiarEstado(Long id, boolean activo) {
+        return ResponseEntity.ok(medicoService.cambiarEstado(id, activo));
+    }
 }

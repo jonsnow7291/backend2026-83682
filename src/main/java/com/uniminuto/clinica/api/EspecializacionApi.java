@@ -26,4 +26,16 @@ public interface EspecializacionApi {
             produces = {"application/json"})
     ResponseEntity<List<Especializacion>> listarEspecializaciones()
             throws BadRequestException;
+
+    /**
+     * Activa o inactiva el registro.
+     *
+     * @param id     identificador.
+     * @param activo nuevo estado.
+     * @return registro actualizado.
+     */
+    @io.swagger.v3.oas.annotations.Operation(summary = "Activar o inactivar")
+    @org.springframework.web.bind.annotation.PatchMapping(value = "/estado", produces = {"application/json"})
+    ResponseEntity<Especializacion> cambiarEstado(@org.springframework.web.bind.annotation.RequestParam Long id,
+                                        @org.springframework.web.bind.annotation.RequestParam boolean activo);
 }

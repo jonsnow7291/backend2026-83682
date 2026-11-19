@@ -38,15 +38,12 @@ Each domain (Cliente, Mascota, Clinica-generic) follows the same layered pattern
 
 Request/response bodies that aren't entities live in `models/` (e.g. `MascotaRq` for pet create/update, `MiRespuestaRS` as a generic `{status, message}` response envelope). JPA entities live in `entity/` and use Lombok `@Data`.
 
-### Error handling — important gotcha
+### Error handling and security
 
-There are **two different `BadRequestException` classes** in play, and most of the codebase uses the wrong one:
-
-- `com.uniminuto.clinica.exception.BadRequestException` — the app's own exception (carries an `HttpStatus`), handled by `GlobalExceptionHandler` (`@RestControllerAdvice`) to produce a structured `ErrorResponse` (400) body.
-- `org.apache.coyote.BadRequestException` — Tomcat's internal exception class, imported and thrown throughout `api/`, `apicontroller/`, and `serviceimpl/` (e.g. in `MascotaServiceImpl`'s validation methods).
-
-Because the service layer throws the Coyote exception, not the app's own one, `GlobalExceptionHandler`'s `BadRequestException` handler never actually fires for these validation errors — they fall through to the generic `Exception` handler and return HTTP 500 with an `INTERNAL_SERVER_ERROR` body instead of a 400. When adding validation or fixing this, use `com.uniminuto.clinica.exception.BadRequestException` so the intended 400 response path is exercised.
+- Use `com.uniminuto.clinica.exception.BadRequestException` (400), `NotFoundException` (404), `ConflictException` (409) and `UnauthorizedException` (401); `GlobalExceptionHandler` maps them (and `AccessDeniedException` → 403) to `ErrorResponse`.
+- Auth is stateless JWT (`/auth/login`); roles ADMIN, SECRETARIA, MEDICO, DESPACHO_MEDICO. The URL matrix is in `config/SecurityConfig`; `UsuarioActual` gives the authenticated user for auditing. See `PLAN_BACKEND.md` section 7 for design decisions and test users (password `Clinica2026*`).
+- DB changes go in `sql/V0N__*.sql` AND `schema.sql` (Docker loads it). Swagger: `/clinica/v1/swagger-ui.html`.
 
 ## Testing
 
-Only a default context-load smoke test exists (`ClinicaApplicationTests`). There is a `spring-boot-starter-data-jpa-test` test dependency but no test classes for services/repositories/controllers yet.
+`ClinicaApplicationTests` needs the DB running; `SeguridadWebTest` (MockMvc slice) and `ReglasCriticasTest` (Mockito) do not.

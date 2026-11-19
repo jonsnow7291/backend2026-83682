@@ -41,4 +41,8 @@ public class Especializacion {
      */
     @Column(name = "codigo_especializacion", nullable = false, length = 10)
     private String codigoEspecializacion;
+
+    /** Indica si la especialidad está activa. */
+    @Column(name = "activa", nullable = false)
+    private Boolean activa = true;
 }

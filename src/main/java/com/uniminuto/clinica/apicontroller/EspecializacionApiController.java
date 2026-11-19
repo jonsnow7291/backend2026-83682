@@ -29,4 +29,12 @@ public class EspecializacionApiController implements EspecializacionApi {
     public ResponseEntity<List<Especializacion>> listarEspecializaciones() throws BadRequestException {
         return ResponseEntity.ok(this.especializacionService.obtenerEspecializaciones());
     }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public ResponseEntity<Especializacion> cambiarEstado(Long id, boolean activo) {
+        return ResponseEntity.ok(especializacionService.cambiarEstado(id, activo));
+    }
 }

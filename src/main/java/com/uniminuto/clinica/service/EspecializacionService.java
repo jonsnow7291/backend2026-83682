@@ -15,4 +15,13 @@ public interface EspecializacionService {
      * @return lista completa.
      */
     List<Especializacion> obtenerEspecializaciones();
+
+    /**
+     * Activa o inactiva el registro (no se elimina para conservar el histórico).
+     *
+     * @param id     identificador.
+     * @param activo nuevo estado.
+     * @return registro actualizado.
+     */
+    Especializacion cambiarEstado(Long id, boolean activo);
 }

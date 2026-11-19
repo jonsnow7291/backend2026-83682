@@ -1,87 +1,66 @@
 package com.uniminuto.clinica.entity;
 
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.ManyToOne;
-import jakarta.persistence.Table;
+import jakarta.persistence.*;
 import lombok.Data;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
- * Entidad JPA que representa una fórmula médica (prescripción) generada en una cita,
- * asociada a un medicamento del inventario. Mapea la tabla {@code formula_medica}.
+ * Fórmula médica emitida por el veterinario, con uno o varios medicamentos. Crearla NO descuenta
+ * inventario: eso ocurre solo al confirmar el despacho.
  */
 @Entity
 @Table(name = "formula_medica")
 @Data
 public class FormulaMedica {
 
-    /**
-     * Identificador único de la fórmula médica, autogenerado por la base de datos.
-     */
+    /** Identificador. */
     @Id
     @Column(name = "id")
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    /**
-     * Cita en la que se generó la fórmula médica.
-     */
+    /** Cita de la que proviene la fórmula. */
     @ManyToOne
     @JoinColumn(name = "cita_id", nullable = false)
     private Cita cita;
 
-    /**
-     * Medicamento del inventario recetado en la fórmula.
-     */
-    @ManyToOne
-    @JoinColumn(name = "medicamento_id", nullable = false)
-    private Medicamento medicamento;
+    /** Médico que la emite. */
+    @Column(name = "medico_id")
+    private Long medicoId;
 
-    /**
-     * Dosis prescrita del medicamento.
-     */
-    @Column(name = "dosis", nullable = false, columnDefinition = "TEXT")
-    private String dosis;
+    /** Atención médica asociada, si existe. */
+    @Column(name = "atencion_id")
+    private Long atencionId;
 
-    /**
-     * Frecuencia de administración del medicamento (ej. "Cada 8 horas").
-     */
-    @Column(name = "frecuencia", nullable = false, length = 100)
-    private String frecuencia;
-
-    /**
-     * Duración del tratamiento expresada en días.
-     */
-    @Column(name = "duracion_dias", nullable = false)
-    private Integer duracionDias;
-
-    /**
-     * Indicaciones adicionales para la administración del medicamento.
-     */
+    /** Indicaciones generales. */
     @Column(name = "indicaciones", columnDefinition = "TEXT")
     private String indicaciones;
 
-    /**
-     * Fecha y hora de emisión de la fórmula. Nunca es anterior a la fecha de la cita.
-     */
+    /** Estado del despacho de la fórmula (refleja el estado del despacho). */
+    @Column(name = "estado_despacho", nullable = false, length = 30)
+    private String estadoDespacho = "PENDIENTE_DESPACHO";
+
+    /** Usuario que la creó. */
+    @Column(name = "usuario_id")
+    private Long usuarioId;
+
+    /** Fecha de emisión. */
     @Column(name = "fecha_emision", nullable = false)
     private LocalDateTime fechaEmision;
 
-    /**
-     * Fecha de creación de la fórmula médica.
-     */
+    /** Fecha de creación del registro. */
     @Column(name = "fecha_creacion_registro", nullable = false)
     private LocalDateTime fechaCreacionRegistro;
 
-    /**
-     * Fecha de la última actualización de la fórmula médica.
-     */
+    /** Fecha de última actualización. */
     @Column(name = "fecha_actualizacion_registro")
     private LocalDateTime fechaActualizacionRegistro;
+
+    /** Medicamentos prescritos. */
+    @OneToMany(cascade = CascadeType.ALL, orphanRemoval = true)
+    @JoinColumn(name = "formula_id", nullable = false)
+    private List<FormulaMedicaDetalle> detalles = new ArrayList<>();
 }

@@ -6,56 +6,59 @@ import com.uniminuto.clinica.exception.BadRequestException;
 import com.uniminuto.clinica.models.FormulaMedicaRq;
 import com.uniminuto.clinica.models.MiRespuestaRS;
 import com.uniminuto.clinica.service.FormulaMedicaService;
+import com.uniminuto.clinica.util.Descargas;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
+import java.util.Map;
 
 /**
- * Implementación REST de {@link FormulaMedicaApi}, delega la lógica de negocio
- * en {@link FormulaMedicaService}.
+ * Controlador REST de fórmulas médicas.
  */
 @RestController
 public class FormulaMedicaApiController implements FormulaMedicaApi {
 
-    /**
-     * Servicio de negocio para operaciones sobre fórmulas médicas.
-     */
     @Autowired
-    private FormulaMedicaService formulaMedicaService;
+    private FormulaMedicaService formulaService;
 
-    /**
-     * {@inheritDoc}
-     */
+    /** {@inheritDoc} */
     @Override
-    public ResponseEntity<List<FormulaMedica>> listarFormulasMedicas() throws BadRequestException {
-        return ResponseEntity.ok(this.formulaMedicaService.listarFormulasMedicas());
+    public ResponseEntity<List<FormulaMedica>> listarFormulasMedicas(Long citaId, Integer mascotaId) {
+        return ResponseEntity.ok(formulaService.listarFormulasMedicas(citaId, mascotaId));
     }
 
-    /**
-     * {@inheritDoc}
-     */
+    /** {@inheritDoc} */
     @Override
     public ResponseEntity<FormulaMedica> consultarFormulaMedica(Long formulaId) throws BadRequestException {
-        return ResponseEntity.ok(this.formulaMedicaService.consultarFormulaMedica(formulaId));
+        return ResponseEntity.ok(formulaService.consultarFormulaMedica(formulaId));
     }
 
-    /**
-     * {@inheritDoc}
-     */
+    /** {@inheritDoc} */
     @Override
-    public ResponseEntity<MiRespuestaRS> guardarFormulaMedica(FormulaMedicaRq formulaMedicaRq)
-            throws BadRequestException {
-        return ResponseEntity.ok(this.formulaMedicaService.guardarFormulaMedica(formulaMedicaRq));
+    @PreAuthorize("hasAnyRole('MEDICO','ADMIN')")
+    public ResponseEntity<MiRespuestaRS> guardarFormulaMedica(FormulaMedicaRq rq) throws BadRequestException {
+        return ResponseEntity.ok(formulaService.guardarFormulaMedica(rq));
     }
 
-    /**
-     * {@inheritDoc}
-     */
+    /** {@inheritDoc} */
     @Override
-    public ResponseEntity<MiRespuestaRS> actualizarFormulaMedica(FormulaMedicaRq formulaMedicaRq)
-            throws BadRequestException {
-        return ResponseEntity.ok(this.formulaMedicaService.actualizarFormulaMedica(formulaMedicaRq));
+    @PreAuthorize("hasAnyRole('MEDICO','ADMIN')")
+    public ResponseEntity<MiRespuestaRS> actualizarFormulaMedica(FormulaMedicaRq rq) throws BadRequestException {
+        return ResponseEntity.ok(formulaService.actualizarFormulaMedica(rq));
+    }
+
+    /** {@inheritDoc} */
+    @Override
+    public ResponseEntity<List<Map<String, Object>>> disponibilidad(Long id) {
+        return ResponseEntity.ok(formulaService.disponibilidad(id));
+    }
+
+    /** {@inheritDoc} */
+    @Override
+    public ResponseEntity<byte[]> pdf(Long id) {
+        return Descargas.pdf("formula-" + id + ".pdf", formulaService.pdf(id));
     }
 }
