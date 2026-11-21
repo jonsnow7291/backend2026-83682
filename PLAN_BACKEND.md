@@ -162,7 +162,7 @@ Un endpoint por reporte, parámetros comunes `desde`, `hasta` y filtros propios;
 - [x] Prueba end-to-end de la cadena: carga masiva → cita → atención → fórmula → prefactura → despacho → factura → pago → reporte (ejecutada con curl contra MariaDB; ver sección de pruebas).
 - [x] Colección Postman actualizada (`postman_collection.json`) con login y variables de entorno.
 - [x] Javadoc en el 100 % de clases/métodos nuevos; limpiar código muerto.
-- [x] `docker compose up --build` desde cero levanta BD + backend sin pasos manuales (verificado con MySQL 8.4; el frontend se agrega al compose con el otro desarrollador). Si el puerto 8080 está ocupado: `BACKEND_PORT=8081 docker compose up --build`. Si ya existía un volumen antiguo: `docker compose down -v` primero para que se recargue `schema.sql`.
+- [x] (healthcheck de MySQL por TCP `127.0.0.1`: con `localhost` pasaba durante la inicialización temporal de la imagen y el backend arrancaba antes de tiempo) `docker compose up --build` desde cero levanta BD + backend sin pasos manuales (verificado con MySQL 8.4; el frontend se agrega al compose con el otro desarrollador). Si el puerto 8080 está ocupado: `BACKEND_PORT=8081 docker compose up --build`. Si ya existía un volumen antiguo: `docker compose down -v` primero para que se recargue `schema.sql`.
 - [ ] Revisar con Documentación que Swagger describe todos los endpoints.
 
 ### Fase 7 – Alineación con el enunciado (revisión 2026-11-20)

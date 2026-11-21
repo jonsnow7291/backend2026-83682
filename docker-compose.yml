@@ -13,7 +13,9 @@ services:
       - clinica-data:/var/lib/mysql
       - ./schema.sql:/docker-entrypoint-initdb.d/schema.sql:ro
     healthcheck:
-      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-uroot", "-p12345"]
+      # 127.0.0.1 (TCP) y no localhost (socket): durante la inicialización la imagen levanta un servidor temporal
+      # sin red que respondería al ping y haría arrancar el backend antes de tiempo.
+      test: ["CMD", "mysqladmin", "ping", "-h", "127.0.0.1", "-uroot", "-p12345"]
       interval: 5s
       timeout: 5s
       retries: 20
