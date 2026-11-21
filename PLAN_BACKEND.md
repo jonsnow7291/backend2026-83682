@@ -176,6 +176,7 @@ Hallazgos de comparar los planes y el código contra `EXAMEN FINAL.pdf`:
 - [x] **3.4** Descuentos solo autorizados por `ADMIN`; datos de la clínica (nombre, NIT, dirección, teléfono) en el encabezado de todos los PDF (variables `CLINICA_NOMBRE`, `CLINICA_NIT`, `CLINICA_DIRECCION`, `CLINICA_TELEFONO`).
 - [x] **3.5** No se factura con un despacho sin procesar (coherencia «solo medicamentos efectivamente dispensados»).
 - [x] Migración `sql/V04__alineacion_enunciado.sql` + `schema.sql` (probada cargando el esquema completo en MariaDB).
+- [x] **Integridad referencial (6.5 / 6.12):** `sql/V05__integridad_referencial.sql` agrega 16 claves foráneas que faltaban (médico→especialidad, cita→especialidad, fórmula→atención/médico, factura→atención/especialidad, detalle de factura→tarifa/medicamento, movimiento→fórmula/despacho/usuario, pago/despacho/carga/log→usuario) y 5 CHECK (stock ≥ 0, precios ≥ 0, entregado ≤ solicitado, pago > 0, totales de factura ≥ 0). El esquema completo queda con 48 FK y 6 CHECK. No se agregó FK `despacho_detalle.formula_detalle_id` a propósito (las líneas de una fórmula pendiente se recrean al editarla).
 - [x] Pruebas nuevas en `ReglasAlineacionEnunciadoTest` (borrador/confirmar, cantidad calculada, utensilio sin vencimiento, descuento solo ADMIN, despacho previo a factura, especialidades). Total: 23 pruebas sin base de datos, todas en verde.
 - [x] Verificación de extremo a extremo con curl contra el backend real (33 comprobaciones: permisos por rol, fórmula → despacho → stock → factura → pago, carga masiva de 62 filas con 10 errores, reportes cuadrados con facturas).
 - [ ] Revisar con Documentación que Swagger describe todos los endpoints nuevos (`/formula-medica/{id}/confirmar`, `/especializacion/guardar|actualizar`).
@@ -220,7 +221,7 @@ Fase 0 ──► Fase 1 (inventario) ──► Fase 4 (despacho)  ──┐
 **Arranque:** `docker compose up --build` (BD en 3307, API en `http://localhost:8080/clinica/v1`) o `./mvnw spring-boot:run` con la BD activa.
 **Swagger:** `http://localhost:8080/clinica/v1/swagger-ui.html` (7 grupos por módulo; botón *Authorize* con el token de `POST /auth/login`).
 **Usuarios de prueba** (contraseña `Clinica2026*`): `admin`, `secretaria`, `medico1` (médico 1), `medico2` (médico 2), `despacho`.
-**Scripts SQL:** `schema.sql` (instalación completa) y `sql/V01`, `V02`, `V03`, `V04` (migración de una BD existente; V04 = alineación con el enunciado).
+**Scripts SQL:** `schema.sql` (instalación completa) y `sql/V01` a `V05` (alineación con el enunciado), `V05` (integridad referencial: 16 FK nuevas y 5 CHECK).
 **Stack completo (BD + backend + frontend):** `docker compose up --build` desde la carpeta raíz del proyecto (`../docker-compose.yml` incluye este compose y agrega el frontend en `http://localhost:4200`). Este `docker-compose.yml` sigue levantando solo BD + backend.
 
 ### Decisiones de diseño
