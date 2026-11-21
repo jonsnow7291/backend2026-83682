@@ -179,6 +179,7 @@ Hallazgos de comparar los planes y el código contra `EXAMEN FINAL.pdf`:
 - [x] **Integridad referencial (6.5 / 6.12):** `sql/V05__integridad_referencial.sql` agrega 16 claves foráneas que faltaban (médico→especialidad, cita→especialidad, fórmula→atención/médico, factura→atención/especialidad, detalle de factura→tarifa/medicamento, movimiento→fórmula/despacho/usuario, pago/despacho/carga/log→usuario) y 5 CHECK (stock ≥ 0, precios ≥ 0, entregado ≤ solicitado, pago > 0, totales de factura ≥ 0). El esquema completo queda con 48 FK y 6 CHECK. No se agregó FK `despacho_detalle.formula_detalle_id` a propósito (las líneas de una fórmula pendiente se recrean al editarla).
 - [x] Pruebas nuevas en `ReglasAlineacionEnunciadoTest` (borrador/confirmar, cantidad calculada, utensilio sin vencimiento, descuento solo ADMIN, despacho previo a factura, especialidades). Total: 23 pruebas sin base de datos, todas en verde.
 - [x] Verificación de extremo a extremo con curl contra el backend real (33 comprobaciones: permisos por rol, fórmula → despacho → stock → factura → pago, carga masiva de 62 filas con 10 errores, reportes cuadrados con facturas).
+- [x] Una factura `ANULADA` reporta saldo 0 (antes seguía mostrando el total como saldo pendiente; detectado en la prueba en navegador).
 - [ ] Revisar con Documentación que Swagger describe todos los endpoints nuevos (`/formula-medica/{id}/confirmar`, `/especializacion/guardar|actualizar`).
 
 ---
