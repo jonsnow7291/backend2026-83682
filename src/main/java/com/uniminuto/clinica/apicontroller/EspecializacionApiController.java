@@ -30,6 +30,18 @@ public class EspecializacionApiController implements EspecializacionApi {
         return ResponseEntity.ok(this.especializacionService.obtenerEspecializaciones());
     }
 
+    /** {@inheritDoc} */
+    @Override
+    public ResponseEntity<Especializacion> guardar(com.uniminuto.clinica.models.EspecializacionRq rq) {
+        return ResponseEntity.ok(especializacionService.guardar(rq));
+    }
+
+    /** {@inheritDoc} */
+    @Override
+    public ResponseEntity<Especializacion> actualizar(com.uniminuto.clinica.models.EspecializacionRq rq) {
+        return ResponseEntity.ok(especializacionService.actualizar(rq));
+    }
+
     /**
      * {@inheritDoc}
      */

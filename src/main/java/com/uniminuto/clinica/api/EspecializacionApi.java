@@ -28,6 +28,26 @@ public interface EspecializacionApi {
             throws BadRequestException;
 
     /**
+     * Registra una especialidad (nombre y código únicos).
+     *
+     * @param rq datos de la especialidad.
+     * @return especialidad creada (activa).
+     */
+    @io.swagger.v3.oas.annotations.Operation(summary = "Registrar especialidad (ADMIN)", description = "Nombre y código únicos. Nace activa.")
+    @org.springframework.web.bind.annotation.PostMapping(value = "/guardar", consumes = {"application/json"}, produces = {"application/json"})
+    ResponseEntity<Especializacion> guardar(@org.springframework.web.bind.annotation.RequestBody com.uniminuto.clinica.models.EspecializacionRq rq);
+
+    /**
+     * Edita una especialidad.
+     *
+     * @param rq datos con id.
+     * @return especialidad actualizada.
+     */
+    @io.swagger.v3.oas.annotations.Operation(summary = "Editar especialidad (ADMIN)")
+    @org.springframework.web.bind.annotation.PutMapping(value = "/actualizar", consumes = {"application/json"}, produces = {"application/json"})
+    ResponseEntity<Especializacion> actualizar(@org.springframework.web.bind.annotation.RequestBody com.uniminuto.clinica.models.EspecializacionRq rq);
+
+    /**
      * Activa o inactiva el registro.
      *
      * @param id     identificador.

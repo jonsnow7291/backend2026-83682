@@ -77,6 +77,9 @@ public class SecurityConfig {
                         .requestMatchers("/tarifa/**").hasRole(Roles.ADMIN)
                         // Estado de especialidades y médicos: ADMIN
                         .requestMatchers(HttpMethod.PATCH, "/especializacion/**", "/medico/**").hasRole(Roles.ADMIN)
+                        // Registro y edición de especialidades (requerimiento 3.1): ADMIN
+                        .requestMatchers(HttpMethod.POST, "/especializacion/**").hasRole(Roles.ADMIN)
+                        .requestMatchers(HttpMethod.PUT, "/especializacion/**").hasRole(Roles.ADMIN)
                         // Horarios: lectura clínica, escritura admin/secretaria
                         .requestMatchers(HttpMethod.GET, "/horario-veterinario/**").hasAnyRole(Roles.ADMIN, Roles.SECRETARIA, Roles.MEDICO)
                         .requestMatchers("/horario-veterinario/**").hasAnyRole(Roles.ADMIN, Roles.SECRETARIA)

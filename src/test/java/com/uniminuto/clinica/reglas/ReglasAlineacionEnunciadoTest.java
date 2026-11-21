@@ -5,12 +5,14 @@ import com.uniminuto.clinica.exception.BadRequestException;
 import com.uniminuto.clinica.exception.ConflictException;
 import com.uniminuto.clinica.models.FacturaDtos;
 import com.uniminuto.clinica.models.FormulaMedicaRq;
+import com.uniminuto.clinica.models.EspecializacionRq;
 import com.uniminuto.clinica.models.LoteRq;
 import com.uniminuto.clinica.repository.*;
 import com.uniminuto.clinica.security.Roles;
 import com.uniminuto.clinica.security.UsuarioActual;
 import com.uniminuto.clinica.service.DespachoService;
 import com.uniminuto.clinica.service.LineasFactura;
+import com.uniminuto.clinica.serviceimpl.EspecializacionServiceImpl;
 import com.uniminuto.clinica.serviceimpl.FacturaServiceImpl;
 import com.uniminuto.clinica.serviceimpl.FormulaMedicaServiceImpl;
 import com.uniminuto.clinica.serviceimpl.InventarioServiceImpl;
@@ -54,6 +56,8 @@ class ReglasAlineacionEnunciadoTest {
     @Mock FacturaRepository facturaRepository;
     @Mock TarifaRepository tarifaRepository;
     @Mock LineasFactura lineasFactura;
+    @Mock EspecializacionRepository especializacionRepository;
+    @InjectMocks EspecializacionServiceImpl especialidades;
     @InjectMocks FormulaMedicaServiceImpl formulas;
     @InjectMocks FacturaServiceImpl facturas;
     @InjectMocks InventarioServiceImpl inventario;
@@ -195,5 +199,28 @@ class ReglasAlineacionEnunciadoTest {
         when(formulaRepository.findAllByCita_IdOrderByIdAsc(7L)).thenReturn(List.of(f));
         when(despachoRepository.findByFormulaId(3L)).thenReturn(Optional.of(d));
         assertThrows(ConflictException.class, () -> facturas.generar(new FacturaDtos.GenerarRq(7L, null)));
+    }
+
+    @Test
+    void laEspecialidadExigeNombreYCodigoValidosYUnicos() {
+        Especializacion existente = new Especializacion();
+        existente.setId(1L);
+        existente.setNombre("Cirugía");
+        existente.setCodigoEspecializacion("CIR");
+        when(especializacionRepository.findAll()).thenReturn(List.of(existente));
+        when(especializacionRepository.save(any())).thenAnswer(i -> i.getArgument(0));
+
+        EspecializacionRq rq = new EspecializacionRq();
+        rq.setNombre("Dermatología");
+        rq.setCodigoEspecializacion("codigo demasiado largo!");
+        assertThrows(BadRequestException.class, () -> especialidades.guardar(rq), "código inválido");
+
+        rq.setCodigoEspecializacion("cir");
+        assertThrows(ConflictException.class, () -> especialidades.guardar(rq), "código repetido (sin distinguir mayúsculas)");
+
+        rq.setCodigoEspecializacion("DER");
+        Especializacion creada = especialidades.guardar(rq);
+        assertEquals("DER", creada.getCodigoEspecializacion());
+        assertTrue(creada.getActiva(), "una especialidad nueva nace activa");
     }
 }
