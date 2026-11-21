@@ -23,7 +23,7 @@ import java.util.List;
 /**
  * Implementación de facturación. Reglas: solo citas atendidas; una factura vigente por cita (no se
  * cobra dos veces); precios e IVA congelados en la línea; solo medicamentos efectivamente
- * despachados; la anulación conserva el histórico y exige que no existan pagos.
+ * despachados (y el despacho no puede quedar sin procesar); descuentos solo por ADMIN; la anulación conserva el histórico y exige que no existan pagos.
  */
 @Service
 public class FacturaServiceImpl implements FacturaService {
@@ -35,6 +35,8 @@ public class FacturaServiceImpl implements FacturaService {
     @Autowired private TarifaRepository tarifaRepository;
     @Autowired private EspecializacionRepository especializacionRepository;
     @Autowired private LineasFactura lineasFactura;
+    @Autowired private FormulaMedicaRepository formulaRepository;
+    @Autowired private DespachoRepository despachoRepository;
     @Autowired private UsuarioActual usuarioActual;
 
     /** {@inheritDoc} */
@@ -51,6 +53,15 @@ public class FacturaServiceImpl implements FacturaService {
         }
         if (facturaRepository.findFirstByCitaIdAndEstadoPagoNot(cita.getId(), "ANULADA").isPresent()) {
             throw new ConflictException("La cita ya tiene una factura vigente: no se puede cobrar dos veces el mismo servicio");
+        }
+        // RN-FAC: solo se factura lo efectivamente dispensado, así que el despacho de cada fórmula
+        // confirmada debe haberse procesado antes de facturar (no puede seguir sin atender).
+        for (FormulaMedica fm : formulaRepository.findAllByCita_IdOrderByIdAsc(cita.getId())) {
+            Despacho dp = despachoRepository.findByFormulaId(fm.getId()).orElse(null);
+            if (dp != null && ("PENDIENTE_DESPACHO".equals(dp.getEstado()) || "EN_PREPARACION".equals(dp.getEstado()))) {
+                throw new ConflictException("La fórmula " + fm.getId() + " aún no ha sido despachada (" + dp.getEstado()
+                        + "). Espere el despacho antes de facturar o solicite su cancelación autorizada");
+            }
         }
         AtencionMedica atencion = atencionRepository.findByCitaId(cita.getId()).orElse(null);
         Tarifa tarifa = null;
@@ -69,6 +80,10 @@ public class FacturaServiceImpl implements FacturaService {
         BigDecimal descuento = rq.descuento() == null ? BigDecimal.ZERO : rq.descuento();
         if (descuento.signum() < 0 || descuento.compareTo(subtotal.add(impuestos)) > 0) {
             throw new BadRequestException("El descuento no puede ser negativo ni superar el total de la factura");
+        }
+        // RN-FAC: los descuentos solo los autoriza un ADMIN (requerimiento 3.4 "descuentos, cuando estén autorizados").
+        if (descuento.signum() > 0 && !usuarioActual.tieneRol(com.uniminuto.clinica.security.Roles.ADMIN)) {
+            throw new org.springframework.security.access.AccessDeniedException("Solo un administrador puede autorizar descuentos");
         }
         Factura f = new Factura();
         f.setCitaId(cita.getId());

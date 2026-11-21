@@ -262,6 +262,12 @@ public class CargaMasivaServiceImpl implements CargaMasivaService {
             if (l.getNumeroLote() == null || l.getNumeroLote().isBlank()) {
                 f.errores.add("El número de lote es obligatorio cuando la cantidad es mayor que cero");
             }
+            if (compra == null) {
+                f.errores.add("La fecha de compra es obligatoria cuando la cantidad es mayor que cero");
+            }
+            if (vence == null && "MEDICAMENTO".equalsIgnoreCase(p.getTipo() == null ? "" : p.getTipo().trim())) {
+                f.errores.add("La fecha de vencimiento es obligatoria para los medicamentos (solo los utensilios pueden omitirla)");
+            }
             if (compra != null && vence != null && !vence.isAfter(compra)) {
                 f.errores.add("La fecha de vencimiento debe ser posterior a la fecha de compra");
             }

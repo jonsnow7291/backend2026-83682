@@ -31,7 +31,14 @@ public class FormulaMedicaRq {
         private String frecuencia;
         /** Duración en días. */
         private Integer duracionDias;
-        /** Cantidad prescrita (unidades a despachar). */
+        /** Unidades por toma (opcional). Con {@code dosisPorDia} se calcula la cantidad total. */
+        private Integer unidadesPorDosis;
+        /** Tomas por día (opcional). */
+        private Integer dosisPorDia;
+        /**
+         * Cantidad prescrita (unidades a despachar). Si se envían {@code unidadesPorDosis} y
+         * {@code dosisPorDia}, el sistema la calcula como unidades × tomas/día × duración y este valor se ignora.
+         */
         private Integer cantidadPrescrita;
         /** Vía de administración. */
         private String viaAdministracion;

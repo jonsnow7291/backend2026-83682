@@ -33,6 +33,14 @@ public class FormulaMedicaDetalle {
     @Column(name = "duracion_dias", nullable = false)
     private Integer duracionDias;
 
+    /** Unidades que se administran en cada toma (opcional; permite calcular la cantidad total). */
+    @Column(name = "unidades_por_dosis")
+    private Integer unidadesPorDosis;
+
+    /** Tomas por día (opcional; permite calcular la cantidad total). */
+    @Column(name = "dosis_por_dia")
+    private Integer dosisPorDia;
+
     /** Cantidad prescrita (unidades a despachar). */
     @Column(name = "cantidad_prescrita", nullable = false)
     private Integer cantidadPrescrita;

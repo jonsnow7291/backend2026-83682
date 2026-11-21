@@ -282,7 +282,7 @@ public class DespachoServiceImpl implements DespachoService {
             if (cant > 0) {
                 LoteMedicamento l = loteRepository.findById(loteId).orElseThrow();
                 Medicamento m = medicamentoRepository.findById(l.getMedicamentoId()).orElseThrow();
-                filas.add(List.of(m.getNombre(), l.getNumeroLote(), l.getFechaVencimiento().toString(), cant));
+                filas.add(List.of(m.getNombre(), l.getNumeroLote(), l.getFechaVencimiento() == null ? "Sin vencimiento" : l.getFechaVencimiento().toString(), cant));
             }
         });
         String usuario = d.getUsuarioId() == null ? "-" : usuarioRepository.findById(d.getUsuarioId()).map(Usuario::getUsername).orElse("-");
@@ -371,7 +371,8 @@ public class DespachoServiceImpl implements DespachoService {
             List<LoteInfo> lotes = loteRepository.findAllByMedicamentoIdOrderByFechaVencimientoAsc(m.getId()).stream()
                     .filter(l -> l.getCantidadDisponible() > 0)
                     .map(l -> new LoteInfo(l.getId(), l.getNumeroLote(), l.getCantidadDisponible(), l.getFechaVencimiento(),
-                            l.getFechaVencimiento().isBefore(hoy) ? "VENCIDO"
+                            l.getFechaVencimiento() == null ? "VIGENTE"
+                                    : l.getFechaVencimiento().isBefore(hoy) ? "VENCIDO"
                                     : l.getFechaVencimiento().isBefore(hoy.plusDays(DIAS_ALERTA + 1)) ? "PROXIMO_A_VENCER" : "VIGENTE"))
                     .toList();
             lineas.add(new Linea(dd.getId(), m.getId(), m.getCodigo(), m.getNombre(), dd.getCantidadSolicitada(),

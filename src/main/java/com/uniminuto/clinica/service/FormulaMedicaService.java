@@ -28,7 +28,17 @@ public interface FormulaMedicaService {
     FormulaMedica consultarFormulaMedica(Long formulaId) throws BadRequestException;
 
     /**
-     * Emite una fórmula con varios medicamentos y crea su despacho pendiente.
+     * Confirma una fórmula en BORRADOR (regla 5.8-2: el médico crea y confirma). Al confirmarla se
+     * crea su despacho PENDIENTE_DESPACHO; el inventario no se toca.
+     *
+     * @param formulaId fórmula a confirmar.
+     * @return respuesta de éxito.
+     * @throws BadRequestException si la fórmula ya estaba confirmada o el id es inválido.
+     */
+    MiRespuestaRS confirmarFormulaMedica(Long formulaId) throws BadRequestException;
+
+    /**
+     * Emite una fórmula (en estado BORRADOR) con varios medicamentos. No genera despacho hasta confirmarla.
      *
      * @param rq datos.
      * @return respuesta con el id de la fórmula en el mensaje.
@@ -37,7 +47,7 @@ public interface FormulaMedicaService {
     MiRespuestaRS guardarFormulaMedica(FormulaMedicaRq rq) throws BadRequestException;
 
     /**
-     * Edita una fórmula mientras su despacho siga PENDIENTE_DESPACHO.
+     * Edita una fórmula mientras sea BORRADOR o su despacho siga PENDIENTE_DESPACHO.
      *
      * @param rq datos con id.
      * @return respuesta de éxito.

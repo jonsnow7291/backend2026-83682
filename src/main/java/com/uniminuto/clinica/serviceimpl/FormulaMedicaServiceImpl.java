@@ -32,8 +32,10 @@ import java.util.Map;
 
 /**
  * Implementación de fórmulas médicas. Reglas: solo sobre citas atendidas; el médico de la cita
- * (o un ADMIN) la emite; solo medicamentos activos de tipo MEDICAMENTO; crear/editar no toca el
- * inventario; no se edita una vez que el despacho dejó de estar PENDIENTE_DESPACHO.
+ * (o un ADMIN) la emite en BORRADOR y solo el MEDICO la confirma (regla 5.8-2), momento en que nace
+ * su despacho; solo medicamentos activos de tipo MEDICAMENTO; crear/editar/confirmar no toca el
+ * inventario; no se edita una vez que el despacho dejó de estar PENDIENTE_DESPACHO. La cantidad
+ * prescrita se calcula como unidades por dosis × dosis por día × duración cuando se informan.
  */
 @Service
 public class FormulaMedicaServiceImpl implements FormulaMedicaService {
@@ -102,10 +104,33 @@ public class FormulaMedicaServiceImpl implements FormulaMedicaService {
         f.setFechaCreacionRegistro(LocalDateTime.now());
         cargarDetalles(f, rq);
         f = formulaRepository.save(f);
+        MiRespuestaRS r = new MiRespuestaRS();
+        r.setStatus(200);
+        r.setMessage("Fórmula médica registrada exitosamente en borrador. Id: " + f.getId()
+                + ". Debe confirmarla para que pase a despacho.");
+        return r;
+    }
+
+    /** {@inheritDoc} */
+    @Override
+    @Transactional
+    public MiRespuestaRS confirmarFormulaMedica(Long formulaId) throws BadRequestException {
+        FormulaMedica f = consultarFormulaMedica(formulaId);
+        if (!"BORRADOR".equals(f.getEstado())) {
+            throw new BadRequestException("La fórmula " + formulaId + " ya fue confirmada");
+        }
+        if (f.getDetalles().isEmpty()) {
+            throw new BadRequestException("La fórmula debe incluir al menos un medicamento");
+        }
+        f.setEstado("CONFIRMADA");
+        f.setFechaConfirmacion(LocalDateTime.now());
+        f.setEstadoDespacho("PENDIENTE_DESPACHO");
+        f.setFechaActualizacionRegistro(LocalDateTime.now());
+        f = formulaRepository.save(f);
         despachoService.crearParaFormula(f);
         MiRespuestaRS r = new MiRespuestaRS();
         r.setStatus(200);
-        r.setMessage("Fórmula médica registrada exitosamente. Id: " + f.getId());
+        r.setMessage("Fórmula médica confirmada. Quedó pendiente de despacho.");
         return r;
     }
 
@@ -117,8 +142,8 @@ public class FormulaMedicaServiceImpl implements FormulaMedicaService {
             throw new BadRequestException("El id de la fórmula es obligatorio");
         }
         FormulaMedica f = consultarFormulaMedica(rq.getFormulaId());
-        var despacho = despachoRepository.findByFormulaId(f.getId()).orElseThrow();
-        if (!"PENDIENTE_DESPACHO".equals(despacho.getEstado())) {
+        var despacho = despachoRepository.findByFormulaId(f.getId()).orElse(null);
+        if (despacho != null && !"PENDIENTE_DESPACHO".equals(despacho.getEstado())) {
             throw new BadRequestException("La fórmula ya está en proceso de despacho (" + despacho.getEstado() + ") y no puede modificarse");
         }
         f.setIndicaciones(rq.getIndicaciones());
@@ -127,7 +152,9 @@ public class FormulaMedicaServiceImpl implements FormulaMedicaService {
         cargarDetalles(f, rq);
         f.setFechaActualizacionRegistro(LocalDateTime.now());
         f = formulaRepository.saveAndFlush(f);
-        despachoService.sincronizarConFormula(f);
+        if (despacho != null) {
+            despachoService.sincronizarConFormula(f);
+        }
         MiRespuestaRS r = new MiRespuestaRS();
         r.setStatus(200);
         r.setMessage("Fórmula médica actualizada exitosamente.");
@@ -158,7 +185,16 @@ public class FormulaMedicaServiceImpl implements FormulaMedicaService {
             if (d.getDuracionDias() == null || d.getDuracionDias() <= 0) {
                 throw new BadRequestException("La duración debe ser mayor que cero para " + m.getNombre());
             }
-            if (d.getCantidadPrescrita() == null || d.getCantidadPrescrita() <= 0) {
+            Integer cantidad = d.getCantidadPrescrita();
+            if (d.getUnidadesPorDosis() != null || d.getDosisPorDia() != null) {
+                if (d.getUnidadesPorDosis() == null || d.getUnidadesPorDosis() <= 0
+                        || d.getDosisPorDia() == null || d.getDosisPorDia() <= 0) {
+                    throw new BadRequestException("Unidades por dosis y dosis por día deben ser mayores que cero para " + m.getNombre());
+                }
+                // Cantidad total requerida según la formulación (requerimiento 1.3).
+                cantidad = d.getUnidadesPorDosis() * d.getDosisPorDia() * d.getDuracionDias();
+            }
+            if (cantidad == null || cantidad <= 0) {
                 throw new BadRequestException("La cantidad prescrita debe ser mayor que cero para " + m.getNombre());
             }
             FormulaMedicaDetalle fd = new FormulaMedicaDetalle();
@@ -166,7 +202,9 @@ public class FormulaMedicaServiceImpl implements FormulaMedicaService {
             fd.setDosis(d.getDosis().trim());
             fd.setFrecuencia(d.getFrecuencia().trim());
             fd.setDuracionDias(d.getDuracionDias());
-            fd.setCantidadPrescrita(d.getCantidadPrescrita());
+            fd.setUnidadesPorDosis(d.getUnidadesPorDosis());
+            fd.setDosisPorDia(d.getDosisPorDia());
+            fd.setCantidadPrescrita(cantidad);
             fd.setViaAdministracion(d.getViaAdministracion());
             fd.setIndicaciones(d.getIndicaciones());
             f.getDetalles().add(fd);

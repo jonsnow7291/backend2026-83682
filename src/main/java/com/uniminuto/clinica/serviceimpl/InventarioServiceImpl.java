@@ -46,6 +46,9 @@ public class InventarioServiceImpl implements InventarioService {
         validarLote(rq);
         Medicamento m = medicamentoRepository.findById(rq.getMedicamentoId())
                 .orElseThrow(() -> new NotFoundException("El producto con id " + rq.getMedicamentoId() + " no existe"));
+        if ("MEDICAMENTO".equals(m.getTipo()) && rq.getFechaVencimiento() == null) {
+            throw new BadRequestException("La fecha de vencimiento es obligatoria para los medicamentos");
+        }
         if (!Boolean.TRUE.equals(m.getActivo())) {
             throw new BadRequestException("El producto está inactivo y no admite entradas");
         }
@@ -86,10 +89,11 @@ public class InventarioServiceImpl implements InventarioService {
         if (rq.getPrecioCompra() != null && rq.getPrecioCompra().signum() < 0) {
             throw new BadRequestException("El precio de compra no puede ser negativo");
         }
-        if (rq.getFechaCompra() == null || rq.getFechaVencimiento() == null) {
-            throw new BadRequestException("Las fechas de compra y vencimiento son obligatorias");
+        if (rq.getFechaCompra() == null) {
+            throw new BadRequestException("La fecha de compra es obligatoria");
         }
-        if (!rq.getFechaVencimiento().isAfter(rq.getFechaCompra())) {
+        // El vencimiento es opcional solo para utensilios (se exige para MEDICAMENTO en registrarEntrada).
+        if (rq.getFechaVencimiento() != null && !rq.getFechaVencimiento().isAfter(rq.getFechaCompra())) {
             throw new BadRequestException("La fecha de vencimiento debe ser posterior a la fecha de compra");
         }
     }
@@ -120,7 +124,7 @@ public class InventarioServiceImpl implements InventarioService {
         }
         LoteMedicamento l = loteRepository.bloquear(loteId)
                 .orElseThrow(() -> new NotFoundException("El lote " + loteId + " no existe"));
-        if (l.getFechaVencimiento().isBefore(LocalDate.now())) {
+        if (l.getFechaVencimiento() != null && l.getFechaVencimiento().isBefore(LocalDate.now())) {
             throw new BadRequestException("El lote " + l.getNumeroLote() + " está vencido y no puede despacharse");
         }
         if (l.getCantidadDisponible() < cantidad) {

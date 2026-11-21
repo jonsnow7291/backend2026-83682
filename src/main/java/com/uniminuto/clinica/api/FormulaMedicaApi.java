@@ -44,7 +44,7 @@ public interface FormulaMedicaApi {
      * @return confirmación con el id.
      * @throws BadRequestException si falla una validación.
      */
-    @Operation(summary = "Crear fórmula", description = "Sobre una cita atendida; varios medicamentos. Crea el despacho PENDIENTE_DESPACHO sin tocar el inventario.")
+    @Operation(summary = "Crear fórmula (borrador)", description = "Sobre una cita atendida; varios medicamentos. Nace en BORRADOR: no genera despacho ni toca el inventario hasta que el médico la confirme. Si se envían unidadesPorDosis y dosisPorDia, la cantidad prescrita se calcula como unidades × tomas/día × duración.")
     @PostMapping(value = "/guardar", produces = {"application/json"}, consumes = {"application/json"})
     ResponseEntity<MiRespuestaRS> guardarFormulaMedica(@RequestBody FormulaMedicaRq rq) throws BadRequestException;
 
@@ -53,9 +53,18 @@ public interface FormulaMedicaApi {
      * @return confirmación.
      * @throws BadRequestException si falla una validación.
      */
-    @Operation(summary = "Editar fórmula", description = "Solo mientras el despacho siga PENDIENTE_DESPACHO.")
+    @Operation(summary = "Editar fórmula", description = "Solo mientras la fórmula sea BORRADOR o su despacho siga PENDIENTE_DESPACHO.")
     @PutMapping(value = "/actualizar", produces = {"application/json"}, consumes = {"application/json"})
     ResponseEntity<MiRespuestaRS> actualizarFormulaMedica(@RequestBody FormulaMedicaRq rq) throws BadRequestException;
+
+    /**
+     * @param id fórmula en borrador.
+     * @return confirmación.
+     * @throws BadRequestException si ya estaba confirmada.
+     */
+    @Operation(summary = "Confirmar fórmula", description = "Regla 5.8-2: el médico crea y confirma. Al confirmar se crea el despacho PENDIENTE_DESPACHO (sin descontar inventario). Solo el MEDICO dueño de la cita.")
+    @PostMapping(value = "/{id}/confirmar", produces = {"application/json"})
+    ResponseEntity<MiRespuestaRS> confirmarFormulaMedica(@PathVariable Long id) throws BadRequestException;
 
     /**
      * @param id fórmula.

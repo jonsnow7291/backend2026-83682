@@ -214,7 +214,7 @@ public class ReporteServiceImpl implements ReporteService {
         ReporteData base = r(tipo, titulo, null, null,
                 List.of("Código", "Producto", "Tipo", "Existencias vigentes", "Valor a costo", "Valor potencial de venta"),
                 "SELECT m.codigo, m.nombre, m.tipo, COALESCE(SUM(l.cantidad_disponible),0), COALESCE(SUM(l.cantidad_disponible * l.precio_compra),0), "
-                        + "COALESCE(SUM(l.cantidad_disponible * m.precio_venta),0) FROM medicamento m LEFT JOIN lote_medicamento l ON l.medicamento_id = m.id AND l.fecha_vencimiento >= CURDATE() "
+                        + "COALESCE(SUM(l.cantidad_disponible * m.precio_venta),0) FROM medicamento m LEFT JOIN lote_medicamento l ON l.medicamento_id = m.id AND (l.fecha_vencimiento IS NULL OR l.fecha_vencimiento >= CURDATE()) "
                         + "WHERE m.activo = TRUE GROUP BY m.id, m.codigo, m.nombre, m.tipo ORDER BY m.nombre",
                 List.of(3, 4, 5), null);
         return base;

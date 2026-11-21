@@ -44,8 +44,8 @@ public class LoteMedicamento {
     @Column(name = "fecha_compra", nullable = false)
     private LocalDate fechaCompra;
 
-    /** Fecha de vencimiento (posterior a la compra). */
-    @Column(name = "fecha_vencimiento", nullable = false)
+    /** Fecha de vencimiento (posterior a la compra). Obligatoria para MEDICAMENTO; opcional (null) para UTENSILIO. */
+    @Column(name = "fecha_vencimiento")
     private LocalDate fechaVencimiento;
 
     /** Fecha de registro. */

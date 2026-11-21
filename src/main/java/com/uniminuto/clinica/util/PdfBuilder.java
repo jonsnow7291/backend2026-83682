@@ -33,6 +33,15 @@ public class PdfBuilder {
     private final Document documento;
 
     /**
+     * @param variable nombre de la variable de entorno. @param defecto valor por omisión.
+     * @return el valor configurado o el de omisión.
+     */
+    private static String dato(String variable, String defecto) {
+        String v = System.getenv(variable);
+        return v == null || v.isBlank() ? defecto : v;
+    }
+
+    /**
      * Crea un PDF con encabezado de la clínica, título y fecha de generación.
      *
      * @param titulo      título del documento.
@@ -43,9 +52,15 @@ public class PdfBuilder {
         try {
             PdfWriter.getInstance(documento, salida);
             documento.open();
-            Paragraph clinica = new Paragraph("CLÍNICA VETERINARIA", NEGRITA);
+            // Datos de la clínica (requerimiento 3.4): configurables por variables de entorno.
+            Paragraph clinica = new Paragraph(dato("CLINICA_NOMBRE", "CLÍNICA VETERINARIA UNIMINUTO"), NEGRITA);
             clinica.setAlignment(Element.ALIGN_CENTER);
             documento.add(clinica);
+            Paragraph contacto = new Paragraph(dato("CLINICA_NIT", "NIT 900.000.000-0") + "  |  "
+                    + dato("CLINICA_DIRECCION", "Bogotá, Colombia") + "  |  "
+                    + dato("CLINICA_TELEFONO", "Tel. (601) 000 0000"), CELDA);
+            contacto.setAlignment(Element.ALIGN_CENTER);
+            documento.add(contacto);
             Paragraph t = new Paragraph(titulo, TITULO);
             t.setAlignment(Element.ALIGN_CENTER);
             t.setSpacingAfter(4);

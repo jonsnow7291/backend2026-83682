@@ -52,6 +52,13 @@ public class FormulaMedicaApiController implements FormulaMedicaApi {
 
     /** {@inheritDoc} */
     @Override
+    @PreAuthorize("hasRole('MEDICO')")
+    public ResponseEntity<MiRespuestaRS> confirmarFormulaMedica(Long id) throws BadRequestException {
+        return ResponseEntity.ok(formulaService.confirmarFormulaMedica(id));
+    }
+
+    /** {@inheritDoc} */
+    @Override
     public ResponseEntity<List<Map<String, Object>>> disponibilidad(Long id) {
         return ResponseEntity.ok(formulaService.disponibilidad(id));
     }

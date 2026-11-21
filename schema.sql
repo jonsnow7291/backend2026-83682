@@ -567,3 +567,18 @@ UPDATE cita SET estado = 'FINALIZADA' WHERE id = 2;
 UPDATE formula_medica SET atencion_id = (SELECT id FROM atencion_medica WHERE cita_id = 2), estado_despacho = 'PENDIENTE_DESPACHO' WHERE id = 1;
 UPDATE formula_medica_detalle SET cantidad_prescrita = 2 WHERE formula_id = 1;
 UPDATE despacho_detalle SET cantidad_solicitada = 2 WHERE despacho_id IN (SELECT id FROM despacho WHERE formula_id = 1);
+
+-- ============================================================
+-- V04: alineacion con el enunciado (ver sql/V04__alineacion_enunciado.sql)
+-- ============================================================
+ALTER TABLE lote_medicamento MODIFY fecha_vencimiento DATE NULL;
+
+ALTER TABLE formula_medica
+    ADD COLUMN estado VARCHAR(20) NOT NULL DEFAULT 'BORRADOR',
+    ADD COLUMN fecha_confirmacion DATETIME NULL;
+-- Las formulas existentes ya tienen despacho: se consideran confirmadas.
+UPDATE formula_medica SET estado = 'CONFIRMADA', fecha_confirmacion = fecha_emision;
+
+ALTER TABLE formula_medica_detalle
+    ADD COLUMN unidades_por_dosis INT NULL,
+    ADD COLUMN dosis_por_dia INT NULL;

@@ -19,8 +19,9 @@ import java.util.Optional;
 @Repository
 public interface LoteRepository extends JpaRepository<LoteMedicamento, Long> {
 
-    /** @param medicamentoId medicamento. @return lotes del medicamento, el que vence primero al inicio. */
-    List<LoteMedicamento> findAllByMedicamentoIdOrderByFechaVencimientoAsc(Long medicamentoId);
+    /** @param medicamentoId medicamento. @return lotes del medicamento, el que vence primero al inicio (los sin vencimiento, al final). */
+    @Query("select l from LoteMedicamento l where l.medicamentoId = :m order by case when l.fechaVencimiento is null then 1 else 0 end, l.fechaVencimiento asc, l.id asc")
+    List<LoteMedicamento> findAllByMedicamentoIdOrderByFechaVencimientoAsc(@Param("m") Long medicamentoId);
 
     /** @param medicamentoId medicamento. @param numeroLote número de lote. @return el lote, si existe. */
     Optional<LoteMedicamento> findByMedicamentoIdAndNumeroLote(Long medicamentoId, String numeroLote);
@@ -30,15 +31,15 @@ public interface LoteRepository extends JpaRepository<LoteMedicamento, Long> {
      * @param medicamentoId medicamento. @param hoy fecha actual. @return lotes disponibles.
      */
     @Lock(LockModeType.PESSIMISTIC_WRITE)
-    @Query("select l from LoteMedicamento l where l.medicamentoId = :m and l.cantidadDisponible > 0 and l.fechaVencimiento >= :hoy order by l.fechaVencimiento asc, l.id asc")
+    @Query("select l from LoteMedicamento l where l.medicamentoId = :m and l.cantidadDisponible > 0 and (l.fechaVencimiento is null or l.fechaVencimiento >= :hoy) order by case when l.fechaVencimiento is null then 1 else 0 end, l.fechaVencimiento asc, l.id asc")
     List<LoteMedicamento> lotesFefoBloqueados(@Param("m") Long medicamentoId, @Param("hoy") LocalDate hoy);
 
     /** Lotes vigentes con existencias (sin bloqueo) en orden FEFO. @param m medicamento. @param hoy fecha. @return lotes. */
-    @Query("select l from LoteMedicamento l where l.medicamentoId = :m and l.cantidadDisponible > 0 and l.fechaVencimiento >= :hoy order by l.fechaVencimiento asc, l.id asc")
+    @Query("select l from LoteMedicamento l where l.medicamentoId = :m and l.cantidadDisponible > 0 and (l.fechaVencimiento is null or l.fechaVencimiento >= :hoy) order by case when l.fechaVencimiento is null then 1 else 0 end, l.fechaVencimiento asc, l.id asc")
     List<LoteMedicamento> lotesFefo(@Param("m") Long m, @Param("hoy") LocalDate hoy);
 
     /** Suma de existencias vigentes. @param m medicamento. @param hoy fecha. @return unidades vigentes. */
-    @Query("select coalesce(sum(l.cantidadDisponible),0) from LoteMedicamento l where l.medicamentoId = :m and l.fechaVencimiento >= :hoy")
+    @Query("select coalesce(sum(l.cantidadDisponible),0) from LoteMedicamento l where l.medicamentoId = :m and (l.fechaVencimiento is null or l.fechaVencimiento >= :hoy)")
     Long stockVigente(@Param("m") Long m, @Param("hoy") LocalDate hoy);
 
     /** Bloquea un lote para escritura. @param id lote. @return lote bloqueado. */

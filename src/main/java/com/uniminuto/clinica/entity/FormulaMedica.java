@@ -39,9 +39,20 @@ public class FormulaMedica {
     @Column(name = "indicaciones", columnDefinition = "TEXT")
     private String indicaciones;
 
-    /** Estado del despacho de la fórmula (refleja el estado del despacho). */
+    /**
+     * Estado de la fórmula: BORRADOR (el médico aún la edita; no genera despacho) o CONFIRMADA
+     * (el médico la confirmó y quedó disponible para el despacho). Regla 5.8-2 del enunciado.
+     */
+    @Column(name = "estado", nullable = false, length = 20)
+    private String estado = "BORRADOR";
+
+    /** Fecha y hora en que el médico confirmó la fórmula. */
+    @Column(name = "fecha_confirmacion")
+    private LocalDateTime fechaConfirmacion;
+
+    /** Estado del despacho de la fórmula (SIN_CONFIRMAR mientras sea borrador; luego refleja el despacho). */
     @Column(name = "estado_despacho", nullable = false, length = 30)
-    private String estadoDespacho = "PENDIENTE_DESPACHO";
+    private String estadoDespacho = "SIN_CONFIRMAR";
 
     /** Usuario que la creó. */
     @Column(name = "usuario_id")
