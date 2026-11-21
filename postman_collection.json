@@ -1247,6 +1247,133 @@
               ]
             }
           }
+        },
+        {
+          "name": "Crear fórmula en borrador (MEDICO) — cantidad calculada",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/formula-medica/guardar",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "formula-medica",
+                "guardar"
+              ],
+              "query": []
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"citaId\": 1,\n  \"indicaciones\": \"Reposo\",\n  \"detalles\": [\n    {\n      \"medicamentoId\": 1,\n      \"dosis\": \"1 tableta\",\n      \"frecuencia\": \"cada 8 horas\",\n      \"duracionDias\": 5,\n      \"unidadesPorDosis\": 1,\n      \"dosisPorDia\": 3,\n      \"viaAdministracion\": \"Oral\"\n    }\n  ]\n}"
+            }
+          }
+        },
+        {
+          "name": "Confirmar fórmula (solo MEDICO)",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/formula-medica/1/confirmar",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "formula-medica",
+                "1",
+                "confirmar"
+              ],
+              "query": []
+            }
+          }
+        },
+        {
+          "name": "Registrar especialidad (ADMIN)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/especializacion/guardar",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "especializacion",
+                "guardar"
+              ],
+              "query": []
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nombre\": \"Dermatología\",\n  \"codigoEspecializacion\": \"DER\",\n  \"descripcion\": \"Piel y pelaje\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Editar especialidad (ADMIN)",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/especializacion/actualizar",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "especializacion",
+                "actualizar"
+              ],
+              "query": []
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"id\": 3,\n  \"nombre\": \"Dermatología felina\",\n  \"codigoEspecializacion\": \"DER\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Generar factura con descuento (solo ADMIN)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/factura/generar",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "factura",
+                "generar"
+              ],
+              "query": []
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"citaId\": 1,\n  \"descuento\": 1000\n}"
+            }
+          }
         }
       ]
     },

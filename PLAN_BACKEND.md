@@ -4,6 +4,8 @@
 **Proyecto:** `backend2026-83682` (Spring Boot 4.0.4, Java 21, Spring Data JPA, MySQL 8.4)
 **Documento base:** `../EXAMEN FINAL.pdf`
 **Trabaja en paralelo con:** Frontend (`../frontend26-83682/PLAN_FRONTEND.md`) y Documentación (`../PLAN_DOCUMENTACION.md`)
+**Rama de trabajo:** `1016004-JDCHAPARRO`
+**Última revisión de alineación con el enunciado:** 2026-11-20 (ver Fase 7 y la sección «Decisiones»)
 
 > Nota: `PLAN_TRABAJO.md` de esta carpeta corresponde al segundo parcial y ya no aplica. Este plan lo reemplaza para el examen final.
 
@@ -55,7 +57,7 @@
 | Cambio | Detalle |
 |---|---|
 | `medicamento` (ampliar) | `codigo` (8 alfanuméricos, único), `registro_invima` (obligatorio si es medicamento, opcional si es utensilio), `tipo` (`MEDICAMENTO`/`UTENSILIO`), `precio_compra`, `precio_venta`, `stock_actual`, `stock_minimo`, `fecha_ingreso`, `fecha_proximo_pedido`, `activo` |
-| `lote_medicamento` (nueva) | `medicamento_id`, `numero_lote`, `cantidad_disponible`, `precio_compra`, `fecha_compra`, `fecha_vencimiento` |
+| `lote_medicamento` (nueva) | `medicamento_id`, `numero_lote`, `cantidad_disponible`, `precio_compra`, `fecha_compra`, `fecha_vencimiento` (**nullable**: solo utensilios) |
 | `movimiento_inventario` (nueva) | `medicamento_id`, `lote_id`, `tipo` (`ENTRADA`/`SALIDA`), `cantidad`, `fecha`, `usuario_id`, `formula_medica_id` (nullable), `despacho_id` (nullable), `motivo` |
 | `carga_masiva` + `carga_masiva_detalle` (nuevas) | Log: archivo, usuario, fecha, total/válidos/rechazados, fila y motivo del error |
 
@@ -72,7 +74,7 @@
   - `GET /inventario/carga-masiva` → historial de cargas.
 - [x] Plantilla descargable de ejemplo del archivo de carga (para Frontend y Documentación).
 
-**Reglas:** stock nunca negativo, vencimiento posterior a la compra, precio venta ≥ 0, Invima obligatorio según `tipo`, código de 8 caracteres `[A-Za-z0-9]`.
+**Reglas:** stock nunca negativo, vencimiento posterior a la compra, precio venta ≥ 0, Invima obligatorio según `tipo`, código de 8 caracteres `[A-Za-z0-9]`. **El vencimiento es obligatorio solo para `MEDICAMENTO`; un `UTENSILIO` puede tener lotes sin vencimiento** (`lote_medicamento.fecha_vencimiento` admite NULL; FEFO deja esos lotes al final y nunca los trata como vencidos).
 
 ### Fase 2 – Requerimiento 2: Citas, horarios y calendario (20 %)
 
@@ -110,21 +112,21 @@
 | `tarifa` | `especializacion_id`, `servicio` (tipo de consulta/procedimiento), `valor`, `iva_porcentaje`, `activa` |
 | `tarifa_log` | `tarifa_id`, valor anterior/nuevo, usuario, fecha (historial de cambios) |
 | `atencion_medica` | `cita_id`, motivo, síntomas, diagnóstico, observaciones, recomendaciones, `estado`, fechas |
-| `formula_medica` (ampliar) | `estado_despacho`, `atencion_id`; **nueva** `formula_medica_detalle` (`medicamento_id`, dosis, frecuencia, duración, cantidad prescrita, vía de administración, indicaciones) |
+| `formula_medica` (ampliar) | `estado` (`BORRADOR`/`CONFIRMADA`), `fecha_confirmacion`, `estado_despacho` (`SIN_CONFIRMAR` mientras es borrador), `atencion_id`; **nueva** `formula_medica_detalle` (`medicamento_id`, dosis, frecuencia, duración, `unidades_por_dosis`, `dosis_por_dia`, cantidad prescrita, vía de administración, indicaciones) |
 | `factura` | `numero`, cita/atención, propietario, mascota, veterinario, especialidad, subtotal, impuestos, descuento, total, fecha, `estado_pago` (`PENDIENTE`, `PARCIAL`, `PAGADA`, `ANULADA`) |
 | `factura_detalle` | servicio o medicamento, cantidad, **precio unitario congelado**, IVA aplicado |
 | `pago` | `factura_id`, valor, método, fecha, usuario |
 
 **Endpoints:**
-- [x] `/especializacion` (activar/inactivar) y `/tarifa` (CRUD con registro en `tarifa_log`; el admin cambia valores sin tocar código).
+- [x] `/especializacion` (**registro** `POST /guardar`, **edición** `PUT /actualizar`, activar/inactivar `PATCH /estado`; nombre y código únicos; solo ADMIN) y `/tarifa` (CRUD con registro en `tarifa_log`; el admin cambia valores sin tocar código).
 - [x] `/atencion` abrir desde una cita, registrar síntomas/diagnóstico/observaciones/recomendaciones, finalizar (queda en el historial clínico de la mascota).
-- [x] `/formula-medica` crear con varios medicamentos, consultar disponibilidad, **PDF de la fórmula** (`GET /formula-medica/{id}/pdf`). **Crear una fórmula NO descuenta inventario.**
+- [x] `/formula-medica` crear con varios medicamentos, consultar disponibilidad, **PDF de la fórmula** (`GET /formula-medica/{id}/pdf`). **Crear una fórmula NO descuenta inventario.** La fórmula nace en `BORRADOR` y el médico la **confirma** (`POST /formula-medica/{id}/confirmar`, solo rol `MEDICO`); solo entonces se crea su despacho (regla 5.8‑2). La cantidad prescrita se **calcula** como `unidades_por_dosis × dosis_por_dia × duración_días` cuando se informan (req. 1.3).
 - [x] **Prefactura PDF** al finalizar la atención (servicios + medicamentos formulados).
 - [x] `/factura` generar, consultar, anular (procedimiento controlado, nunca borrar), **PDF** (`GET /factura/{id}/pdf`) con todos los campos del enunciado.
 - [x] `/pago` registrar pagos (parcial o total); recalcula `estado_pago`.
 - [x] Historial de facturación por propietario y por mascota.
 
-**Reglas:** una cita atendida puede generar factura; no cobrar dos veces el mismo servicio por una atención; la tarifa se copia a la factura (cambios posteriores no la alteran); IVA según la tarifa/producto; solo se facturan medicamentos **efectivamente despachados**; pagos siempre ligados a una factura; la anulación conserva el histórico.
+**Reglas:** una cita atendida puede generar factura; **no se factura mientras una fórmula confirmada siga en `PENDIENTE_DESPACHO` o `EN_PREPARACION`** (se factura solo lo efectivamente despachado); **solo un `ADMIN` puede autorizar un descuento** (RN‑FAC); no cobrar dos veces el mismo servicio por una atención; la tarifa se copia a la factura (cambios posteriores no la alteran); IVA según la tarifa/producto; solo se facturan medicamentos **efectivamente despachados**; pagos siempre ligados a una factura; la anulación conserva el histórico.
 
 ### Fase 4 – Requerimiento 5: Despacho y dispensación (20 %)
 
@@ -162,6 +164,21 @@ Un endpoint por reporte, parámetros comunes `desde`, `hasta` y filtros propios;
 - [x] Javadoc en el 100 % de clases/métodos nuevos; limpiar código muerto.
 - [x] `docker compose up --build` desde cero levanta BD + backend sin pasos manuales (verificado con MySQL 8.4; el frontend se agrega al compose con el otro desarrollador). Si el puerto 8080 está ocupado: `BACKEND_PORT=8081 docker compose up --build`. Si ya existía un volumen antiguo: `docker compose down -v` primero para que se recargue `schema.sql`.
 - [ ] Revisar con Documentación que Swagger describe todos los endpoints.
+
+### Fase 7 – Alineación con el enunciado (revisión 2026-11-20)
+
+Hallazgos de comparar los planes y el código contra `EXAMEN FINAL.pdf`:
+
+- [x] **5.8‑2** El médico crea **y confirma** la fórmula: estados `BORRADOR → CONFIRMADA`, endpoint `confirmar` solo `MEDICO`, el despacho nace al confirmar (antes nacía al crear).
+- [x] **1.3** Cantidad total requerida calculada desde la formulación (`unidades_por_dosis`, `dosis_por_dia`, `duracion_dias`).
+- [x] **1.1/1.2** Utensilios sin vencimiento: columna nullable, FEFO y reportes null‑safe, validación por tipo en entradas y carga masiva.
+- [x] **3.1** Registro y edición de especialidades (solo existía activar/inactivar). Se corrigió además el mensaje de error de `cambiarEstado`.
+- [x] **3.4** Descuentos solo autorizados por `ADMIN`; datos de la clínica (nombre, NIT, dirección, teléfono) en el encabezado de todos los PDF (variables `CLINICA_NOMBRE`, `CLINICA_NIT`, `CLINICA_DIRECCION`, `CLINICA_TELEFONO`).
+- [x] **3.5** No se factura con un despacho sin procesar (coherencia «solo medicamentos efectivamente dispensados»).
+- [x] Migración `sql/V04__alineacion_enunciado.sql` + `schema.sql` (probada cargando el esquema completo en MariaDB).
+- [x] Pruebas nuevas en `ReglasAlineacionEnunciadoTest` (borrador/confirmar, cantidad calculada, utensilio sin vencimiento, descuento solo ADMIN, despacho previo a factura, especialidades). Total: 23 pruebas sin base de datos, todas en verde.
+- [x] Verificación de extremo a extremo con curl contra el backend real (33 comprobaciones: permisos por rol, fórmula → despacho → stock → factura → pago, carga masiva de 62 filas con 10 errores, reportes cuadrados con facturas).
+- [ ] Revisar con Documentación que Swagger describe todos los endpoints nuevos (`/formula-medica/{id}/confirmar`, `/especializacion/guardar|actualizar`).
 
 ---
 
@@ -203,9 +220,16 @@ Fase 0 ──► Fase 1 (inventario) ──► Fase 4 (despacho)  ──┐
 **Arranque:** `docker compose up --build` (BD en 3307, API en `http://localhost:8080/clinica/v1`) o `./mvnw spring-boot:run` con la BD activa.
 **Swagger:** `http://localhost:8080/clinica/v1/swagger-ui.html` (7 grupos por módulo; botón *Authorize* con el token de `POST /auth/login`).
 **Usuarios de prueba** (contraseña `Clinica2026*`): `admin`, `secretaria`, `medico1` (médico 1), `medico2` (médico 2), `despacho`.
-**Scripts SQL:** `schema.sql` (instalación completa) y `sql/V01`, `V02`, `V03` (migración de una BD existente).
+**Scripts SQL:** `schema.sql` (instalación completa) y `sql/V01`, `V02`, `V03`, `V04` (migración de una BD existente; V04 = alineación con el enunciado).
+**Stack completo (BD + backend + frontend):** `docker compose up --build` desde la carpeta raíz del proyecto (`../docker-compose.yml` incluye este compose y agrega el frontend en `http://localhost:4200`). Este `docker-compose.yml` sigue levantando solo BD + backend.
 
 ### Decisiones de diseño
+- **Estados de la cita:** `PENDIENTE → CONFIRMADA → ATENDIDA → FINALIZADA` (+ `CANCELADA`). `ATENDIDA` = la cita se atendió / se abrió la atención médica; `FINALIZADA` = la atención se finalizó (queda en la historia clínica y genera la prefactura). Se facturan citas `ATENDIDA` o `FINALIZADA`. Se guardan como texto validado por `CitaEstados` (un catálogo lógico) en vez de tabla `estado_cita`: son 5 valores fijos del negocio y evita una FK sin datos propios; se justifica en el documento del modelo de datos.
+- **Roles:** columna `usuario.rol` validada por `Roles` (4 perfiles fijos) en vez de tabla `rol`; el enunciado pide «usuario y roles» como entidad y se cubre con el atributo y su restricción. Si el docente exige tabla aparte, el cambio es mecánico (V05).
+- **Quién puede qué con las fórmulas:** `MEDICO` y `ADMIN` crean/editan borradores; **solo `MEDICO`** (dueño de la cita) confirma. `DESPACHO_MEDICO` no puede crear ni editar (403).
+- **`ADMIN` no opera el despacho** (regla 5.8‑1: exclusivo de `DESPACHO_MEDICO`); solo autoriza cancelaciones y reversiones con sus credenciales.
+- **Lotes en el despacho:** el sistema asigna los lotes por FEFO automáticamente; el despachador confirma las **cantidades** entregadas (puede entregar menos). No elige lotes manualmente.
+- **Reabastecer un producto existente:** `POST /inventario/entrada` agrega un lote nuevo; la carga masiva solo crea productos nuevos (un código o nombre ya existente se rechaza como duplicado).
 - **Stock:** `medicamento.stock_actual` se mantiene sincronizado (suma de lotes vigentes) en la misma transacción de cada movimiento; permite filtrar agotados/stock bajo sin sumar lotes en cada listado.
 - **Carga masiva:** `previsualizar` no guarda nada; `confirmar` recibe el archivo de nuevo, revalida e importa cada fila en su propia transacción (`REQUIRES_NEW`). Cada fila crea un producto nuevo (código y nombre únicos) con su lote inicial.
 - **Citas:** `cita.fecha_hora` es el inicio; `fecha_hora_fin` = inicio + duración (30 min por defecto). Estados en mayúscula: PENDIENTE, CONFIRMADA, ATENDIDA, CANCELADA, FINALIZADA.
@@ -221,10 +245,14 @@ Fase 0 ──► Fase 1 (inventario) ──► Fase 4 (despacho)  ──┐
 | Médico solo ve sus citas | `CitaServiceImpl`, `AtencionServiceImpl`, `FormulaMedicaServiceImpl` vía `UsuarioActual.exigirPropioSiEsMedico` |
 | Código 8 alfanuméricos, Invima por tipo, precios ≥ 0 | `MedicamentoServiceImpl.validar` |
 | Stock nunca negativo, no descontar vencidos, vencimiento > compra | `InventarioServiceImpl` |
-| 12 reglas de despacho | Javadoc de `DespachoServiceImpl` |
+| 12 reglas de despacho | Javadoc de `DespachoServiceImpl` (la 5.8‑2 en `FormulaMedicaServiceImpl.confirmarFormulaMedica`) |
+| Descuento solo ADMIN; despacho antes de facturar | `FacturaServiceImpl.generar` |
+| Cantidad total calculada | `FormulaMedicaServiceImpl.cargarDetalles` |
+| Vencimiento solo obligatorio en MEDICAMENTO | `InventarioServiceImpl.registrarEntrada`, `CargaMasivaServiceImpl.interpretar` |
+| Especialidad: nombre y código únicos | `EspecializacionServiceImpl.validar` |
 | No cobrar dos veces, solo cita atendida | `FacturaServiceImpl.generar` |
 | Pago ≤ saldo, siempre ligado a factura | `PagoServiceImpl.registrar` |
 
 ### Pruebas
-`./mvnw test`: `SeguridadWebTest` (login, 401, 403 por rol) y `ReglasCriticasTest` (stock negativo, lote vencido, doble descuento, entrega parcial, doble cobro, pago > saldo). Colección Postman actualizada en `postman_collection.json` (el login guarda `{{token}}`).
+`./mvnw test`: `SeguridadWebTest` (login, 401, 403 por rol), `ReglasCriticasTest` (stock negativo, lote vencido, doble descuento, entrega parcial, doble cobro, pago > saldo) y `ReglasAlineacionEnunciadoTest` (borrador/confirmar fórmula, cantidad calculada, utensilio sin vencimiento, descuento solo ADMIN, despacho previo a factura, especialidades). Total 23 pruebas. Colección Postman actualizada en `postman_collection.json` (el login guarda `{{token}}`).
 Nota: con MariaDB como BD de prueba use `SPRING_JPA_PROPERTIES_HIBERNATE_DIALECT=org.hibernate.dialect.MariaDBDialect` (el `FOR UPDATE OF` del dialecto MySQL 8 no existe en MariaDB); con MySQL 8.4 no hace falta.
