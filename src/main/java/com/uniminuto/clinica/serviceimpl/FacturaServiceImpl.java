@@ -154,7 +154,7 @@ public class FacturaServiceImpl implements FacturaService {
                 .map(Especializacion::getNombre).orElse("-");
         return new FacturaRs(f, c.getCliente().getNombres() + " " + c.getCliente().getApellidos(),
                 c.getMascota().getNombreMascota(), c.getMedico().getNombres() + " " + c.getMedico().getApellidos(), esp,
-                pagos, pagado, f.getTotal().subtract(pagado));
+                pagos, pagado, "ANULADA".equals(f.getEstadoPago()) ? BigDecimal.ZERO : f.getTotal().subtract(pagado));
     }
 
     /** {@inheritDoc} */
