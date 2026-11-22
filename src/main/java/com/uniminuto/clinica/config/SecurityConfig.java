@@ -77,6 +77,9 @@ public class SecurityConfig {
                         .requestMatchers("/tarifa/**").hasRole(Roles.ADMIN)
                         // Estado de especialidades y médicos: ADMIN
                         .requestMatchers(HttpMethod.PATCH, "/especializacion/**", "/medico/**").hasRole(Roles.ADMIN)
+                        // Alta y edición de razas (catálogo): ADMIN
+                        .requestMatchers(HttpMethod.POST, "/raza/**").hasRole(Roles.ADMIN)
+                        .requestMatchers(HttpMethod.PUT, "/raza/**").hasRole(Roles.ADMIN)
                         // Alta y edición de médicos: ADMIN
                         .requestMatchers(HttpMethod.POST, "/medico/**").hasRole(Roles.ADMIN)
                         .requestMatchers(HttpMethod.PUT, "/medico/**").hasRole(Roles.ADMIN)

@@ -49,6 +49,7 @@ public class DespachoServiceImpl implements DespachoService {
     @Autowired private UsuarioRepository usuarioRepository;
     @Autowired private PasswordEncoder passwordEncoder;
     @Autowired private UsuarioActual usuarioActual;
+    @Autowired private com.uniminuto.clinica.repository.FacturaRepository facturaRepository;
 
     /** {@inheritDoc} */
     @Override
@@ -232,6 +233,14 @@ public class DespachoServiceImpl implements DespachoService {
         if (d.getDetalles().stream().noneMatch(x -> x.getCantidadEntregada() > 0)) {
             throw new ConflictException("El despacho no tiene entregas para reversar");
         }
+        // Integridad: lo facturado es lo efectivamente despachado; no se reversa una entrega ya cobrada.
+        formulaRepository.findById(d.getFormulaId()).ifPresent(f -> {
+            if (f.getCita() != null) {
+                facturaRepository.findFirstByCitaIdAndEstadoPagoNot(f.getCita().getId(), "ANULADA").ifPresent(fa -> {
+                    throw new ConflictException("La cita ya fue facturada (" + fa.getNumero() + "): anule la factura antes de reversar la entrega");
+                });
+            }
+        });
         Map<Long, Integer> neto = new LinkedHashMap<>();
         for (MovimientoInventario mv : movimientoRepository.findAllByDespachoId(d.getId())) {
             neto.merge(mv.getLoteId(), "SALIDA".equals(mv.getTipo()) ? mv.getCantidad() : -mv.getCantidad(), Integer::sum);

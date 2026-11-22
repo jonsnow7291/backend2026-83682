@@ -1,6 +1,16 @@
 package com.uniminuto.clinica.reglas;
 
 import com.uniminuto.clinica.entity.Cita;
+import com.uniminuto.clinica.entity.Despacho;
+import com.uniminuto.clinica.entity.DespachoDetalle;
+import com.uniminuto.clinica.entity.Factura;
+import com.uniminuto.clinica.entity.FormulaMedica;
+import com.uniminuto.clinica.exception.ConflictException;
+import com.uniminuto.clinica.models.DespachoDtos;
+import com.uniminuto.clinica.repository.DespachoRepository;
+import com.uniminuto.clinica.repository.FacturaRepository;
+import com.uniminuto.clinica.repository.FormulaMedicaRepository;
+import com.uniminuto.clinica.serviceimpl.DespachoServiceImpl;
 import com.uniminuto.clinica.entity.Medico;
 import com.uniminuto.clinica.entity.Usuario;
 import com.uniminuto.clinica.exception.BadRequestException;
@@ -46,7 +56,11 @@ class ReglasCorreccionesQaTest {
     @Mock OtpService otpService;
     @Mock UsuarioActual usuarioActual;
     @Mock CitaRepository citaRepository;
+    @Mock DespachoRepository despachoRepository;
+    @Mock FormulaMedicaRepository formulaRepository;
+    @Mock FacturaRepository facturaRepository;
     @InjectMocks AuthServiceImpl auth;
+    @InjectMocks DespachoServiceImpl despachos;
     @InjectMocks CitaServiceImpl citas;
 
     private LoginRq login(String user, String pass) {
@@ -92,5 +106,35 @@ class ReglasCorreccionesQaTest {
             @Override public Long medicoId() { return 2L; }
         };
         assertThrows(AccessDeniedException.class, () -> real.exigirPropioSiEsMedico(1L));
+    }
+
+    @Test
+    void noSeReversaUnaEntregaDeUnaCitaYaFacturada() {
+        Usuario admin = new Usuario();
+        admin.setUsername("admin");
+        admin.setRol(Roles.ADMIN);
+        admin.setActivo(true);
+        admin.setPasswordHash("hash");
+        when(usuarioRepository.findByUsername("admin")).thenReturn(Optional.of(admin));
+        when(passwordEncoder.matches(any(), any())).thenReturn(true);
+        Despacho d = new Despacho();
+        d.setId(3L);
+        d.setFormulaId(4L);
+        d.setEstado("DESPACHADO");
+        DespachoDetalle linea = new DespachoDetalle();
+        linea.setCantidadEntregada(5);
+        d.getDetalles().add(linea);
+        when(despachoRepository.bloquear(3L)).thenReturn(Optional.of(d));
+        Cita cita = new Cita();
+        cita.setId(65L);
+        FormulaMedica f = new FormulaMedica();
+        f.setId(4L);
+        f.setCita(cita);
+        when(formulaRepository.findById(4L)).thenReturn(Optional.of(f));
+        Factura factura = new Factura();
+        factura.setNumero("FAC-2026-000043");
+        when(facturaRepository.findFirstByCitaIdAndEstadoPagoNot(65L, "ANULADA")).thenReturn(Optional.of(factura));
+        assertThrows(ConflictException.class, () -> despachos.reversar(3L,
+                new com.uniminuto.clinica.models.DespachoDtos.AutorizacionRq("error", "admin", "x")));
     }
 }

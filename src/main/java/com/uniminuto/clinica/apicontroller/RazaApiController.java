@@ -4,6 +4,7 @@ import com.uniminuto.clinica.api.RazaApi;
 import com.uniminuto.clinica.entity.Raza;
 import com.uniminuto.clinica.exception.BadRequestException;
 import com.uniminuto.clinica.service.RazaService;
+import com.uniminuto.clinica.models.RazaRq;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.RestController;
@@ -28,5 +29,15 @@ public class RazaApiController implements RazaApi {
     @Override
     public ResponseEntity<List<Raza>> listarRazas() throws BadRequestException {
         return ResponseEntity.ok(this.razaService.obtenerRazas());
+    }
+
+    @Override
+    public ResponseEntity<Raza> guardarRaza(RazaRq rq) {
+        return ResponseEntity.ok(this.razaService.guardarRaza(rq));
+    }
+
+    @Override
+    public ResponseEntity<Raza> actualizarRaza(RazaRq rq) {
+        return ResponseEntity.ok(this.razaService.actualizarRaza(rq));
     }
 }

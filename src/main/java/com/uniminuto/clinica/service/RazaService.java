@@ -2,6 +2,8 @@ package com.uniminuto.clinica.service;
 
 import com.uniminuto.clinica.entity.Raza;
 
+import com.uniminuto.clinica.models.RazaRq;
+
 import java.util.List;
 
 /**
@@ -15,4 +17,10 @@ public interface RazaService {
      * @return lista de razas.
      */
     List<Raza> obtenerRazas();
+
+    /** Registra una raza nueva (nombre único por especie). */
+    Raza guardarRaza(RazaRq rq);
+
+    /** Actualiza una raza existente. */
+    Raza actualizarRaza(RazaRq rq);
 }
