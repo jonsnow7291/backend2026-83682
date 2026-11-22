@@ -32,6 +32,11 @@ services:
       SPRING_DATASOURCE_USERNAME: root
       SPRING_DATASOURCE_PASSWORD: "12345"
       JWT_SECRET: "clinica-veterinaria-secreto-jwt-2026-uniminuto"
+      # SMTP (Brevo): las credenciales viven en el archivo .env (no versionado)
+      MAIL_USERNAME: "${MAIL_USERNAME:-}"
+      MAIL_PASSWORD: "${MAIL_PASSWORD:-}"
+      MAIL_REMITENTE: "${MAIL_REMITENTE:-}"
+      OTP_USUARIOS: "${OTP_USUARIOS:-jchaparro}"
     ports:
       - "${BACKEND_PORT:-8080}:8080"
 

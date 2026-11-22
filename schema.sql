@@ -214,7 +214,8 @@ VALUES
 (4, 'secretaria', '$2a$10$gIOou07.Z4ivD4wTkukhSOjckjj/kD8O8P0fnAn5it2PuJnJgM2QC', 'SECRETARIA', NOW(), TRUE, 'secretaria@clinica.com'),
 (5, 'medico1', '$2a$10$gIOou07.Z4ivD4wTkukhSOjckjj/kD8O8P0fnAn5it2PuJnJgM2QC', 'MEDICO', NOW(), TRUE, 'maria.gonzalez@clinica.com'),
 (6, 'medico2', '$2a$10$gIOou07.Z4ivD4wTkukhSOjckjj/kD8O8P0fnAn5it2PuJnJgM2QC', 'MEDICO', NOW(), TRUE, 'carlos.rodriguez@clinica.com'),
-(7, 'despacho', '$2a$10$gIOou07.Z4ivD4wTkukhSOjckjj/kD8O8P0fnAn5it2PuJnJgM2QC', 'DESPACHO_MEDICO', NOW(), TRUE, 'despacho@clinica.com')
+(7, 'despacho', '$2a$10$gIOou07.Z4ivD4wTkukhSOjckjj/kD8O8P0fnAn5it2PuJnJgM2QC', 'DESPACHO_MEDICO', NOW(), TRUE, 'despacho@clinica.com'),
+(8, 'jchaparro', '$2a$10$gIOou07.Z4ivD4wTkukhSOjckjj/kD8O8P0fnAn5it2PuJnJgM2QC', 'ADMIN', NOW(), TRUE, 'juanchaparro729@gmail.com')
 ON DUPLICATE KEY UPDATE username=username;
 
 -- Vínculo médico <-> usuario (el médico solo ve sus propias citas)

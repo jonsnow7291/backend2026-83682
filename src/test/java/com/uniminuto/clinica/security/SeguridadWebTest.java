@@ -43,6 +43,9 @@ class SeguridadWebTest {
     @MockitoBean
     private MedicoRepository medicoRepository;
 
+    @MockitoBean
+    private com.uniminuto.clinica.service.OtpService otpService;
+
     private String loginComo(String username, String rol) throws Exception {
         Usuario u = new Usuario();
         u.setId(9L);

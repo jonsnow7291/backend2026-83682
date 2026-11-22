@@ -18,6 +18,14 @@ public interface AuthService {
     LoginRs login(LoginRq rq);
 
     /**
+     * Segundo paso del login: valida el OTP y emite el token.
+     *
+     * @param rq desafío y código.
+     * @return token y datos de sesión.
+     */
+    LoginRs verificarOtp(com.uniminuto.clinica.models.VerificarOtpRq rq);
+
+    /**
      * @return datos del usuario autenticado en la solicitud actual.
      */
     SesionRs sesionActual();

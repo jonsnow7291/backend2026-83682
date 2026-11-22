@@ -35,6 +35,18 @@ public interface AuthApi {
     ResponseEntity<LoginRs> login(@Valid @RequestBody LoginRq rq);
 
     /**
+     * Segundo paso del login para usuarios con OTP.
+     *
+     * @param rq desafío y código recibido por correo.
+     * @return token y datos del usuario.
+     */
+    @Operation(summary = "Verificar código OTP", description = "Segundo paso del login: valida el código de 6 dígitos enviado al correo y devuelve el JWT.")
+    @ApiResponse(responseCode = "200", description = "Autenticado")
+    @ApiResponse(responseCode = "401", description = "Código incorrecto o vencido")
+    @PostMapping(value = "/verificar-otp", consumes = {"application/json"}, produces = {"application/json"})
+    ResponseEntity<LoginRs> verificarOtp(@Valid @RequestBody com.uniminuto.clinica.models.VerificarOtpRq rq);
+
+    /**
      * Devuelve los datos del usuario del token enviado.
      *
      * @return usuario autenticado.

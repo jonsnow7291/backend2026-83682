@@ -46,7 +46,7 @@ import java.util.List;
 public class SecurityConfig {
 
     private static final String[] PUBLICAS = {
-            "/auth/login", "/swagger-ui.html", "/swagger-ui/**", "/v3/api-docs/**", "/error"
+            "/auth/login", "/auth/verificar-otp", "/swagger-ui.html", "/swagger-ui/**", "/v3/api-docs/**", "/error"
     };
 
     /**

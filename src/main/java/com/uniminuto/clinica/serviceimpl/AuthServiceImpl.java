@@ -6,6 +6,8 @@ import com.uniminuto.clinica.exception.UnauthorizedException;
 import com.uniminuto.clinica.models.LoginRq;
 import com.uniminuto.clinica.models.LoginRs;
 import com.uniminuto.clinica.models.SesionRs;
+import com.uniminuto.clinica.models.VerificarOtpRq;
+import com.uniminuto.clinica.service.OtpService;
 import com.uniminuto.clinica.repository.MedicoRepository;
 import com.uniminuto.clinica.repository.UsuarioRepository;
 import com.uniminuto.clinica.security.JwtService;
@@ -36,6 +38,9 @@ public class AuthServiceImpl implements AuthService {
     private JwtService jwtService;
 
     @Autowired
+    private OtpService otpService;
+
+    @Autowired
     private UsuarioActual usuarioActual;
 
     /** {@inheritDoc} */
@@ -48,6 +53,23 @@ public class AuthServiceImpl implements AuthService {
                 || !passwordEncoder.matches(rq.getPassword(), usuario.getPasswordHash())) {
             throw new UnauthorizedException(MENSAJE_INVALIDO);
         }
+        if (otpService.requiere(usuario)) {
+            String desafio = otpService.emitir(usuario);
+            return new LoginRs(null, "Bearer", 0, null, true, desafio, otpService.enmascarar(usuario.getEmail()));
+        }
+        return sesion(usuario);
+    }
+
+    /** {@inheritDoc} */
+    @Override
+    public LoginRs verificarOtp(VerificarOtpRq rq) {
+        String username = otpService.verificar(rq.getDesafioId(), rq.getCodigo());
+        Usuario usuario = usuarioRepository.findByUsername(username)
+                .orElseThrow(() -> new UnauthorizedException(MENSAJE_INVALIDO));
+        return sesion(usuario);
+    }
+
+    private LoginRs sesion(Usuario usuario) {
         Long medicoId = medicoRepository.findByUsuarioId(usuario.getId()).map(Medico::getId).orElse(null);
         String token = jwtService.generar(usuario, medicoId);
         return new LoginRs(token, "Bearer", jwtService.segundosExpiracion(),

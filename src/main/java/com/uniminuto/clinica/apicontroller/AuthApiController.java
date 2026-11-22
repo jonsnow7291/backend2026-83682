@@ -26,6 +26,12 @@ public class AuthApiController implements AuthApi {
 
     /** {@inheritDoc} */
     @Override
+    public ResponseEntity<LoginRs> verificarOtp(com.uniminuto.clinica.models.VerificarOtpRq rq) {
+        return ResponseEntity.ok(authService.verificarOtp(rq));
+    }
+
+    /** {@inheritDoc} */
+    @Override
     public ResponseEntity<SesionRs> me() {
         return ResponseEntity.ok(authService.sesionActual());
     }
