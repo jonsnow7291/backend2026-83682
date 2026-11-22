@@ -77,6 +77,17 @@ public class SecurityConfig {
                         .requestMatchers("/tarifa/**").hasRole(Roles.ADMIN)
                         // Estado de especialidades y médicos: ADMIN
                         .requestMatchers(HttpMethod.PATCH, "/especializacion/**", "/medico/**").hasRole(Roles.ADMIN)
+                        // Alta y edición de médicos: ADMIN
+                        .requestMatchers(HttpMethod.POST, "/medico/**").hasRole(Roles.ADMIN)
+                        .requestMatchers(HttpMethod.PUT, "/medico/**").hasRole(Roles.ADMIN)
+                        // Alta y edición de clientes (propietarios): ADMIN y SECRETARIA
+                        .requestMatchers(HttpMethod.POST, "/cliente/**").hasAnyRole(Roles.ADMIN, Roles.SECRETARIA)
+                        .requestMatchers(HttpMethod.PUT, "/cliente/**").hasAnyRole(Roles.ADMIN, Roles.SECRETARIA)
+                        // Historias y anotaciones: lectura clínica; escritura solo ADMIN y MEDICO (la secretaria consulta)
+                        .requestMatchers(HttpMethod.GET, "/historia-medica/**", "/anotacion-historia/**")
+                        .hasAnyRole(Roles.ADMIN, Roles.SECRETARIA, Roles.MEDICO)
+                        .requestMatchers("/historia-medica/**", "/anotacion-historia/**")
+                        .hasAnyRole(Roles.ADMIN, Roles.MEDICO)
                         // Registro y edición de especialidades (requerimiento 3.1): ADMIN
                         .requestMatchers(HttpMethod.POST, "/especializacion/**").hasRole(Roles.ADMIN)
                         .requestMatchers(HttpMethod.PUT, "/especializacion/**").hasRole(Roles.ADMIN)

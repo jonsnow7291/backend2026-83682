@@ -67,6 +67,10 @@ public class AtencionServiceImpl implements AtencionService {
         if (!List.of(CitaEstados.PENDIENTE, CitaEstados.CONFIRMADA, CitaEstados.ATENDIDA).contains(cita.getEstado())) {
             throw new BadRequestException("No se puede abrir la atención de una cita en estado " + cita.getEstado());
         }
+        if (cita.getFechaHora().toLocalDate().isAfter(java.time.LocalDate.now())) {
+            throw new BadRequestException("No se puede abrir la atención de una cita programada para una fecha futura ("
+                    + cita.getFechaHora().toLocalDate() + ")");
+        }
         AtencionMedica a = new AtencionMedica();
         a.setCitaId(cita.getId());
         a.setMedicoId(cita.getMedico().getId());
@@ -160,6 +164,10 @@ public class AtencionServiceImpl implements AtencionService {
     @Override
     public List<AtencionMedica> historialMascota(Integer mascotaId) {
         List<AtencionMedica> todas = atencionRepository.findAllByOrderByFechaInicioDesc();
+        Long propio = usuarioActual.medicoRestringido();
+        if (propio != null) {
+            todas = todas.stream().filter(a -> propio.equals(a.getMedicoId())).toList();
+        }
         return todas.stream().filter(a -> citaRepository.findById(a.getCitaId())
                 .map(c -> c.getMascota().getMascotaId().equals(mascotaId)).orElse(false)).toList();
     }

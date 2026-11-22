@@ -3,6 +3,8 @@ package com.uniminuto.clinica.service;
 import com.uniminuto.clinica.entity.Cliente;
 import com.uniminuto.clinica.exception.BadRequestException;
 
+import com.uniminuto.clinica.models.ClienteRq;
+
 import java.util.List;
 
 /**
@@ -25,4 +27,10 @@ public interface ClienteService {
      * @throws BadRequestException si el identificador es inválido o el cliente no existe.
      */
     Cliente consultarCliente(Long clienteId) throws BadRequestException;
+
+    /** Registra un cliente nuevo validando datos y documento único. */
+    Cliente guardarCliente(ClienteRq rq);
+
+    /** Actualiza los datos de un cliente existente. */
+    Cliente actualizarCliente(ClienteRq rq);
 }

@@ -4,7 +4,11 @@ import com.uniminuto.clinica.entity.Cliente;
 import com.uniminuto.clinica.exception.BadRequestException;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.CrossOrigin;
+import com.uniminuto.clinica.models.ClienteRq;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 
@@ -35,6 +39,12 @@ public interface ClienteApi {
      * @return respuesta HTTP con el cliente encontrado.
      * @throws BadRequestException si el identificador es inválido o el cliente no existe.
      */
+    @PostMapping(value = "/guardar", consumes = {"application/json"}, produces = {"application/json"})
+    ResponseEntity<Cliente> guardarCliente(@RequestBody ClienteRq rq);
+
+    @PutMapping(value = "/actualizar", consumes = {"application/json"}, produces = {"application/json"})
+    ResponseEntity<Cliente> actualizarCliente(@RequestBody ClienteRq rq);
+
     @GetMapping(value = "/consultar",
             produces = {"application/json"})
     ResponseEntity<Cliente> consultarCliente(

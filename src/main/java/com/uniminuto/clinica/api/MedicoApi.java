@@ -4,7 +4,11 @@ import com.uniminuto.clinica.entity.Medico;
 import com.uniminuto.clinica.exception.BadRequestException;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.CrossOrigin;
+import com.uniminuto.clinica.models.MedicoRq;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 
 import java.util.List;
@@ -34,6 +38,14 @@ public interface MedicoApi {
      * @param activo nuevo estado.
      * @return registro actualizado.
      */
+    @io.swagger.v3.oas.annotations.Operation(summary = "Registrar un médico veterinario")
+    @PostMapping(value = "/guardar", consumes = {"application/json"}, produces = {"application/json"})
+    ResponseEntity<Medico> guardarMedico(@RequestBody MedicoRq rq);
+
+    @io.swagger.v3.oas.annotations.Operation(summary = "Actualizar un médico veterinario")
+    @PutMapping(value = "/actualizar", consumes = {"application/json"}, produces = {"application/json"})
+    ResponseEntity<Medico> actualizarMedico(@RequestBody MedicoRq rq);
+
     @io.swagger.v3.oas.annotations.Operation(summary = "Activar o inactivar")
     @org.springframework.web.bind.annotation.PatchMapping(value = "/estado", produces = {"application/json"})
     ResponseEntity<Medico> cambiarEstado(@org.springframework.web.bind.annotation.RequestParam Long id,

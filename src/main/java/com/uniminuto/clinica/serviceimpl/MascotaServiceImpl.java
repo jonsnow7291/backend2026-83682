@@ -24,6 +24,10 @@ import java.util.Optional;
 @Service
 public class MascotaServiceImpl implements MascotaService {
 
+    /** Edad máxima razonable de una mascota (años). */
+    private static final int EDAD_MAXIMA = 40;
+
+
     /**
      * Repositorio JPA para el acceso a datos de mascotas.
      */
@@ -59,7 +63,7 @@ public class MascotaServiceImpl implements MascotaService {
             throw new BadRequestException("El id de la mascota no puede ser nulo o negativo");
         }
         return this.mascotaRepository.findById(mascotaId)
-                .orElseThrow(() -> new BadRequestException("La mascota seleccionada no existe"));
+                .orElseThrow(() -> new com.uniminuto.clinica.exception.NotFoundException("La mascota " + mascotaId + " no existe"));
     }
 
     /**
@@ -140,9 +144,11 @@ public class MascotaServiceImpl implements MascotaService {
             throw new BadRequestException("El cliente seleccionado no es valido");
         }
 
+        this.validarSinDuplicado(optCliente.get(), mascotaRq.getNombreMascota(), null);
+
         // Paso 3. Creo la mascota y la guardo en la base de datos
         Mascota mascota = new Mascota();
-        mascota.setNombreMascota(mascotaRq.getNombreMascota());
+        mascota.setNombreMascota(mascotaRq.getNombreMascota().trim());
         mascota.setEdad(mascotaRq.getEdad());
         mascota.setRaza(optRaza.get());
         mascota.setCliente(optCliente.get());
@@ -185,7 +191,8 @@ public class MascotaServiceImpl implements MascotaService {
 
         // Paso 4. Actualizar los datos
         Mascota mascotaExistente = optMascota.get();
-        mascotaExistente.setNombreMascota(mascotaRq.getNombreMascota());
+        this.validarSinDuplicado(optCliente.get(), mascotaRq.getNombreMascota(), mascotaExistente.getMascotaId());
+        mascotaExistente.setNombreMascota(mascotaRq.getNombreMascota().trim());
         mascotaExistente.setEdad(mascotaRq.getEdad());
         mascotaExistente.setRaza(optRaza.get());
         mascotaExistente.setCliente(optCliente.get());
@@ -202,6 +209,23 @@ public class MascotaServiceImpl implements MascotaService {
     }
 
     /**
+     * Un cliente no puede tener dos mascotas con el mismo nombre.
+     *
+     * @param cliente   propietario.
+     * @param nombre    nombre de la mascota.
+     * @param idExcluir mascota que se está actualizando ({@code null} al crear).
+     */
+    private void validarSinDuplicado(Cliente cliente, String nombre, Integer idExcluir) {
+        boolean existe = this.mascotaRepository.findAllByCliente(cliente).stream()
+                .anyMatch(m -> m.getNombreMascota().trim().equalsIgnoreCase(nombre.trim())
+                        && !m.getMascotaId().equals(idExcluir));
+        if (existe) {
+            throw new com.uniminuto.clinica.exception.ConflictException(
+                    "El cliente ya tiene una mascota llamada '" + nombre.trim() + "'");
+        }
+    }
+
+    /**
      * Valida que los datos de entrada de una mascota sean correctos.
      *
      * @param mascotaRq datos a validar.
@@ -211,11 +235,20 @@ public class MascotaServiceImpl implements MascotaService {
         if (mascotaRq == null) {
             throw new BadRequestException("El objeto MascotaRq no puede ser nulo");
         }
-        if (mascotaRq.getNombreMascota() == null || mascotaRq.getNombreMascota().isEmpty()) {
+        if (mascotaRq.getNombreMascota() == null || mascotaRq.getNombreMascota().isBlank()) {
             throw new BadRequestException("El nombre de la mascota no puede ser nulo o vacío");
+        }
+        if (mascotaRq.getNombreMascota().trim().length() > 100) {
+            throw new BadRequestException("El nombre de la mascota no puede superar 100 caracteres");
+        }
+        if (mascotaRq.getNombreMascota().contains("<") || mascotaRq.getNombreMascota().contains(">")) {
+            throw new BadRequestException("El nombre de la mascota contiene caracteres no permitidos (< >)");
         }
         if (mascotaRq.getEdad() == null || mascotaRq.getEdad() <= 0) {
             throw new BadRequestException("La edad de la mascota no puede ser nula o negativa");
+        }
+        if (mascotaRq.getEdad() > EDAD_MAXIMA) {
+            throw new BadRequestException("La edad de la mascota no puede superar " + EDAD_MAXIMA + " años");
         }
         if (mascotaRq.getRazaId() == null || mascotaRq.getRazaId() <= 0) {
             throw new BadRequestException("El id de la raza no puede ser nulo o negativo");

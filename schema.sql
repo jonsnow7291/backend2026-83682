@@ -560,11 +560,12 @@ INSERT INTO tarifa (id, especializacion_id, servicio, valor, iva_porcentaje, act
 (4, 2, 'Procedimiento quirurgico menor', 250000, 19, TRUE)
 ON DUPLICATE KEY UPDATE servicio = servicio;
 
--- Citas atendidas de prueba: la 2 tiene formula con despacho pendiente
+-- Citas atendidas de prueba (1, 2 y 3): cada una con su atencion finalizada para poder facturarse;
+-- la 2 tiene formula con despacho pendiente
 INSERT INTO atencion_medica (cita_id, medico_id, tarifa_id, motivo, sintomas, diagnostico, observaciones, recomendaciones, estado, fecha_inicio, fecha_fin)
 SELECT c.id, c.medico_id, CASE c.medico_id WHEN 2 THEN 3 ELSE 1 END, c.motivo, 'N/A', 'Seed', 'Atencion de prueba', 'Control en 15 dias', 'FINALIZADA', c.fecha_hora, c.fecha_hora_fin
-FROM cita c WHERE c.id IN (2);
-UPDATE cita SET estado = 'FINALIZADA' WHERE id = 2;
+FROM cita c WHERE c.id IN (1, 2, 3);
+UPDATE cita SET estado = 'FINALIZADA' WHERE id IN (1, 2, 3);
 UPDATE formula_medica SET atencion_id = (SELECT id FROM atencion_medica WHERE cita_id = 2), estado_despacho = 'PENDIENTE_DESPACHO' WHERE id = 1;
 UPDATE formula_medica_detalle SET cantidad_prescrita = 2 WHERE formula_id = 1;
 UPDATE despacho_detalle SET cantidad_solicitada = 2 WHERE despacho_id IN (SELECT id FROM despacho WHERE formula_id = 1);

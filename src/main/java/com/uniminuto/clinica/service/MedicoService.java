@@ -2,6 +2,8 @@ package com.uniminuto.clinica.service;
 
 import com.uniminuto.clinica.entity.Medico;
 
+import com.uniminuto.clinica.models.MedicoRq;
+
 import java.util.List;
 
 /**
@@ -24,4 +26,10 @@ public interface MedicoService {
      * @return registro actualizado.
      */
     Medico cambiarEstado(Long id, boolean activo);
+
+    /** Registra un médico nuevo. */
+    Medico guardarMedico(MedicoRq rq);
+
+    /** Actualiza un médico existente. */
+    Medico actualizarMedico(MedicoRq rq);
 }

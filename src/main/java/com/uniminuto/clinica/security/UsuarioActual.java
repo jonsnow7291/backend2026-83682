@@ -65,6 +65,18 @@ public class UsuarioActual {
     }
 
     /**
+     * @return id del médico si el usuario actual es MEDICO (solo ve lo suyo); {@code null} si no aplica
+     *         restricción (otros roles) o no hay sesión (uso interno).
+     */
+    public Long medicoRestringido() {
+        try {
+            return tieneRol(Roles.MEDICO) ? medicoId() : null;
+        } catch (UnauthorizedException e) {
+            return null;
+        }
+    }
+
+    /**
      * Verifica que el usuario pueda gestionar datos del médico indicado: un usuario MEDICO solo
      * puede operar sobre sus propios datos; el resto de roles clínicos no tiene esa restricción.
      *

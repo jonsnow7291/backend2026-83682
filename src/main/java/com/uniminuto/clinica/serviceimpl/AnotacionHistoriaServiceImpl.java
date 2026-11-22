@@ -10,6 +10,7 @@ import com.uniminuto.clinica.repository.AnotacionHistoriaRepository;
 import com.uniminuto.clinica.repository.HistoriaMedicaRepository;
 import com.uniminuto.clinica.repository.MedicoRepository;
 import com.uniminuto.clinica.service.AnotacionHistoriaService;
+import com.uniminuto.clinica.security.UsuarioActual;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -42,6 +43,12 @@ public class AnotacionHistoriaServiceImpl implements AnotacionHistoriaService {
     private MedicoRepository medicoRepository;
 
     /**
+     * Usuario autenticado: un MEDICO solo opera sobre historias de sus citas y firma con su propia identidad.
+     */
+    @Autowired
+    private UsuarioActual usuarioActual;
+
+    /**
      * {@inheritDoc}
      */
     @Override
@@ -59,7 +66,7 @@ public class AnotacionHistoriaServiceImpl implements AnotacionHistoriaService {
         this.validarAnotacionHistoriaRq(anotacionHistoriaRq);
 
         HistoriaMedica historiaMedica = this.obtenerHistoriaMedicaValida(anotacionHistoriaRq.getHistoriaId());
-        Medico medico = this.obtenerMedicoValido(anotacionHistoriaRq.getMedicoId());
+        Medico medico = this.obtenerMedicoValido(this.medicoAutor(anotacionHistoriaRq.getMedicoId()));
 
         AnotacionHistoria anotacion = new AnotacionHistoria();
         anotacion.setHistoriaMedica(historiaMedica);
@@ -94,9 +101,12 @@ public class AnotacionHistoriaServiceImpl implements AnotacionHistoriaService {
         }
 
         HistoriaMedica historiaMedica = this.obtenerHistoriaMedicaValida(anotacionHistoriaRq.getHistoriaId());
-        Medico medico = this.obtenerMedicoValido(anotacionHistoriaRq.getMedicoId());
+        Medico medico = this.obtenerMedicoValido(this.medicoAutor(anotacionHistoriaRq.getMedicoId()));
 
         AnotacionHistoria anotacionExistente = optAnotacion.get();
+        if (anotacionExistente.getMedico() != null) {
+            this.usuarioActual.exigirPropioSiEsMedico(anotacionExistente.getMedico().getId());
+        }
         anotacionExistente.setHistoriaMedica(historiaMedica);
         anotacionExistente.setMedico(medico);
         this.asignarTextos(anotacionExistente, anotacionHistoriaRq);
@@ -158,8 +168,28 @@ public class AnotacionHistoriaServiceImpl implements AnotacionHistoriaService {
         if (historiaId == null || historiaId <= 0) {
             throw new BadRequestException("El id de la historia medica no puede ser nulo o negativo");
         }
-        return this.historiaMedicaRepository.findById(historiaId)
+        HistoriaMedica historia = this.historiaMedicaRepository.findById(historiaId)
                 .orElseThrow(() -> new BadRequestException("La historia medica seleccionada no es valida"));
+        if (historia.getCita() != null && historia.getCita().getMedico() != null) {
+            this.usuarioActual.exigirPropioSiEsMedico(historia.getCita().getMedico().getId());
+        }
+        return historia;
+    }
+
+    /**
+     * Determina el médico autor de la anotación: un MEDICO firma siempre con su propia identidad
+     * (no se acepta el {@code medicoId} del cuerpo si es otro); los demás roles usan el indicado.
+     *
+     * @param medicoSolicitado médico enviado en la solicitud.
+     * @return identificador del médico autor.
+     */
+    private Long medicoAutor(Long medicoSolicitado) {
+        Long propio = this.usuarioActual.medicoRestringido();
+        if (propio == null) {
+            return medicoSolicitado;
+        }
+        this.usuarioActual.exigirPropioSiEsMedico(medicoSolicitado);
+        return propio;
     }
 
     /**
@@ -182,7 +212,9 @@ public class AnotacionHistoriaServiceImpl implements AnotacionHistoriaService {
         if (anotacionId == null || anotacionId <= 0) {
             throw new BadRequestException("El id de la anotacion no puede ser nulo o negativo");
         }
-        return this.anotacionHistoriaRepository.findById(anotacionId)
+        AnotacionHistoria anotacion = this.anotacionHistoriaRepository.findById(anotacionId)
                 .orElseThrow(() -> new BadRequestException("La anotacion seleccionada no es valida"));
+        this.obtenerHistoriaMedicaValida(anotacion.getHistoriaMedica().getId());
+        return anotacion;
     }
 }

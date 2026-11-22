@@ -13,6 +13,7 @@ import com.uniminuto.clinica.repository.ClienteRepository;
 import com.uniminuto.clinica.repository.HistoriaMedicaRepository;
 import com.uniminuto.clinica.repository.MascotaRepository;
 import com.uniminuto.clinica.service.HistoriaMedicaService;
+import com.uniminuto.clinica.security.UsuarioActual;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -60,10 +61,57 @@ public class HistoriaMedicaServiceImpl implements HistoriaMedicaService {
     private AnotacionHistoriaRepository anotacionHistoriaRepository;
 
     /**
+     * Usuario autenticado: un MEDICO solo accede a las historias de sus propias citas.
+     */
+    @Autowired
+    private UsuarioActual usuarioActual;
+
+    /**
      * {@inheritDoc}
      */
     @Override
     public List<HistoriaMedica> listarHistoriasMedicas(LocalDateTime fechaInicial, LocalDateTime fechaFinal)
+            throws BadRequestException {
+        return this.soloPropias(this.consultarListado(fechaInicial, fechaFinal));
+    }
+
+    /**
+     * Filtra las historias para que un MEDICO solo vea las de sus propias citas.
+     *
+     * @param historias historias candidatas.
+     * @return historias visibles para el usuario actual.
+     */
+    private List<HistoriaMedica> soloPropias(List<HistoriaMedica> historias) {
+        Long propio = this.usuarioActual.medicoRestringido();
+        if (propio == null) {
+            return historias;
+        }
+        return historias.stream()
+                .filter(h -> h.getCita() != null && h.getCita().getMedico() != null
+                        && propio.equals(h.getCita().getMedico().getId()))
+                .toList();
+    }
+
+    /**
+     * Exige que la historia pertenezca a una cita del médico autenticado (si es MEDICO).
+     *
+     * @param historia historia a proteger.
+     */
+    private void exigirPropia(HistoriaMedica historia) {
+        if (historia.getCita() != null && historia.getCita().getMedico() != null) {
+            this.usuarioActual.exigirPropioSiEsMedico(historia.getCita().getMedico().getId());
+        }
+    }
+
+    /**
+     * Consulta el listado sin restricción de rol.
+     *
+     * @param fechaInicial inicio (opcional).
+     * @param fechaFinal   fin (opcional).
+     * @return historias del rango.
+     * @throws BadRequestException si el rango es inválido.
+     */
+    private List<HistoriaMedica> consultarListado(LocalDateTime fechaInicial, LocalDateTime fechaFinal)
             throws BadRequestException {
         if (fechaInicial == null && fechaFinal == null) {
             return this.historiaMedicaRepository.findAllByOrderByFechaCreacionDesc();
@@ -88,6 +136,7 @@ public class HistoriaMedicaServiceImpl implements HistoriaMedicaService {
         Mascota mascota = this.obtenerMascotaValida(historiaMedicaRq.getMascotaId());
         this.validarClienteAsociado(mascota, historiaMedicaRq.getClienteId());
         Cita cita = this.validarCitaAsociada(mascota, historiaMedicaRq.getCitaId());
+        this.usuarioActual.exigirPropioSiEsMedico(cita.getMedico().getId());
         this.validarCitaSinHistoria(cita.getId(), null);
 
         HistoriaMedica historiaMedica = new HistoriaMedica();
@@ -125,6 +174,8 @@ public class HistoriaMedicaServiceImpl implements HistoriaMedicaService {
         this.validarCitaSinHistoria(cita.getId(), historiaMedicaRq.getHistoriaId());
 
         HistoriaMedica historiaExistente = optHistoriaMedica.get();
+        this.exigirPropia(historiaExistente);
+        this.usuarioActual.exigirPropioSiEsMedico(cita.getMedico().getId());
         this.asignarDatos(historiaExistente, mascota, cita, historiaMedicaRq);
 
         this.historiaMedicaRepository.save(historiaExistente);
@@ -149,6 +200,8 @@ public class HistoriaMedicaServiceImpl implements HistoriaMedicaService {
             throw new BadRequestException("La historia medica seleccionada no es valida");
         }
 
+        this.exigirPropia(optHistoriaMedica.get());
+
         if (this.anotacionHistoriaRepository.existsByHistoriaMedica_Id(historiaId)) {
             throw new BadRequestException(
                     "La historia medica tiene anotaciones clinicas registradas y no puede eliminarse");
@@ -170,8 +223,10 @@ public class HistoriaMedicaServiceImpl implements HistoriaMedicaService {
         if (historiaId == null || historiaId <= 0) {
             throw new BadRequestException("El id de la historia medica no puede ser nulo o negativo");
         }
-        return this.historiaMedicaRepository.findById(historiaId)
+        HistoriaMedica historia = this.historiaMedicaRepository.findById(historiaId)
                 .orElseThrow(() -> new BadRequestException("La historia medica seleccionada no es valida"));
+        this.exigirPropia(historia);
+        return historia;
     }
 
     /**

@@ -48,6 +48,7 @@ public class TarifaServiceImpl implements TarifaService {
     @Transactional
     public Tarifa crear(TarifaRq rq) {
         validar(rq);
+        validarSinDuplicado(rq, null);
         Tarifa t = new Tarifa();
         aplicar(t, rq);
         t = tarifaRepository.save(t);
@@ -63,6 +64,7 @@ public class TarifaServiceImpl implements TarifaService {
             throw new BadRequestException("El id de la tarifa es obligatorio");
         }
         validar(rq);
+        validarSinDuplicado(rq, rq.getId());
         Tarifa t = buscar(rq.getId());
         BigDecimal valorAnt = t.getValor();
         BigDecimal ivaAnt = t.getIvaPorcentaje();
@@ -107,6 +109,17 @@ public class TarifaServiceImpl implements TarifaService {
         if (rq.getIvaPorcentaje() != null && (rq.getIvaPorcentaje().signum() < 0
                 || rq.getIvaPorcentaje().compareTo(new BigDecimal("100")) > 0)) {
             throw new BadRequestException("El IVA debe estar entre 0 y 100");
+        }
+    }
+
+    /** Una especialidad no puede tener dos tarifas con el mismo nombre de servicio. */
+    private void validarSinDuplicado(TarifaRq rq, Long idExcluir) {
+        boolean existe = tarifaRepository
+                .findAllByEspecializacionIdAndServicioIgnoreCase(rq.getEspecializacionId(), rq.getServicio().trim())
+                .stream().anyMatch(t -> !t.getId().equals(idExcluir));
+        if (existe) {
+            throw new com.uniminuto.clinica.exception.ConflictException(
+                    "Ya existe una tarifa '" + rq.getServicio().trim() + "' para esta especialidad");
         }
     }
 

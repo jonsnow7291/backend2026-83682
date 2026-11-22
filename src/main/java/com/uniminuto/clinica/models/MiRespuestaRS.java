@@ -17,4 +17,8 @@ public class MiRespuestaRS {
      * Mensaje descriptivo del resultado de la operación.
      */
     private String message;
+
+    /** Id del recurso creado (solo en altas que lo informan, p. ej. citas). */
+    @com.fasterxml.jackson.annotation.JsonInclude(com.fasterxml.jackson.annotation.JsonInclude.Include.NON_NULL)
+    private Long id;
 }

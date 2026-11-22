@@ -72,7 +72,8 @@ public class OtpServiceImpl implements OtpService {
             mailSender.send(mensaje);
         } catch (Exception e) {
             LOG.error("No se pudo enviar el OTP a {}: {}", enmascarar(usuario.getEmail()), e.getMessage());
-            throw new IllegalStateException("No se pudo enviar el código por correo. Intente de nuevo.");
+            throw new com.uniminuto.clinica.exception.ServiceUnavailableException(
+                    "No se pudo enviar el código de verificación por correo. Intente de nuevo en unos minutos o contacte al administrador.");
         }
         desafios.put(id, new Desafio(usuario.getUsername(), codigo,
                 Instant.now().plusSeconds(MINUTOS_VIGENCIA * 60L), new int[]{0}));

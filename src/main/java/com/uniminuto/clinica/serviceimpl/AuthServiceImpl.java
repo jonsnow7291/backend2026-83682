@@ -2,6 +2,7 @@ package com.uniminuto.clinica.serviceimpl;
 
 import com.uniminuto.clinica.entity.Medico;
 import com.uniminuto.clinica.entity.Usuario;
+import com.uniminuto.clinica.exception.TooManyRequestsException;
 import com.uniminuto.clinica.exception.UnauthorizedException;
 import com.uniminuto.clinica.models.LoginRq;
 import com.uniminuto.clinica.models.LoginRs;
@@ -17,6 +18,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import java.time.Instant;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+
 /**
  * Implementación del login: valida usuario activo y contraseña (BCrypt) y emite el JWT.
  */
@@ -24,6 +29,16 @@ import org.springframework.stereotype.Service;
 public class AuthServiceImpl implements AuthService {
 
     private static final String MENSAJE_INVALIDO = "Usuario o contraseña incorrectos";
+
+    /** Intentos fallidos consecutivos antes de bloquear temporalmente el usuario. */
+    private static final int MAX_INTENTOS = 5;
+    /** Duración del bloqueo (segundos). */
+    private static final long BLOQUEO_SEGUNDOS = 300;
+    /** Tope de usuarios rastreados (evita crecer sin límite con nombres inventados). */
+    private static final int MAX_RASTREADOS = 10_000;
+
+    /** Estado de intentos fallidos por usuario: [conteo, instante de fin del bloqueo en epoch seconds]. */
+    private final Map<String, long[]> intentos = new ConcurrentHashMap<>();
 
     @Autowired
     private UsuarioRepository usuarioRepository;
@@ -46,18 +61,52 @@ public class AuthServiceImpl implements AuthService {
     /** {@inheritDoc} */
     @Override
     public LoginRs login(LoginRq rq) {
-        Usuario usuario = usuarioRepository.findByUsername(rq.getUsername().trim())
-                .orElseThrow(() -> new UnauthorizedException(MENSAJE_INVALIDO));
-        if (!Boolean.TRUE.equals(usuario.getActivo())
+        String clave = rq.getUsername().trim().toLowerCase();
+        verificarBloqueo(clave);
+        Usuario usuario = usuarioRepository.findByUsername(rq.getUsername().trim()).orElse(null);
+        if (usuario == null
+                || !Boolean.TRUE.equals(usuario.getActivo())
                 || usuario.getPasswordHash() == null
                 || !passwordEncoder.matches(rq.getPassword(), usuario.getPasswordHash())) {
+            registrarFallo(clave);
             throw new UnauthorizedException(MENSAJE_INVALIDO);
         }
+        intentos.remove(clave);
         if (otpService.requiere(usuario)) {
             String desafio = otpService.emitir(usuario);
             return new LoginRs(null, "Bearer", 0, null, true, desafio, otpService.enmascarar(usuario.getEmail()));
         }
         return sesion(usuario);
+    }
+
+    /** Rechaza el intento si el usuario está bloqueado por demasiados fallos. */
+    private void verificarBloqueo(String clave) {
+        long[] e = intentos.get(clave);
+        if (e != null && e[1] > Instant.now().getEpochSecond()) {
+            long resta = e[1] - Instant.now().getEpochSecond();
+            throw new TooManyRequestsException("Demasiados intentos fallidos. Intente de nuevo en " + ((resta + 59) / 60) + " minuto(s).");
+        }
+    }
+
+    /** Cuenta un fallo y bloquea al llegar al máximo. */
+    private void registrarFallo(String clave) {
+        if (intentos.size() >= MAX_RASTREADOS) {
+            long ahora = Instant.now().getEpochSecond();
+            intentos.values().removeIf(v -> v[1] != 0 && v[1] <= ahora);
+            if (intentos.size() >= MAX_RASTREADOS) {
+                intentos.clear();
+            }
+        }
+        intentos.compute(clave, (k, v) -> {
+            long ahora = Instant.now().getEpochSecond();
+            long[] e = (v == null || (v[1] != 0 && v[1] <= ahora)) ? new long[]{0, 0} : v;
+            e[0]++;
+            if (e[0] >= MAX_INTENTOS) {
+                e[0] = 0;
+                e[1] = ahora + BLOQUEO_SEGUNDOS;
+            }
+            return e;
+        });
     }
 
     /** {@inheritDoc} */

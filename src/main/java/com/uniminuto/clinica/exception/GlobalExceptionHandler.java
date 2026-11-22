@@ -120,14 +120,36 @@ public class GlobalExceptionHandler {
     }
 
     /**
-     * Archivo adjunto demasiado grande: HTTP 400.
+     * Archivo adjunto demasiado grande: HTTP 413.
      *
      * @param ex excepción de carga.
-     * @return respuesta HTTP 400.
+     * @return respuesta HTTP 413.
      */
     @ExceptionHandler(MaxUploadSizeExceededException.class)
     public ResponseEntity<ErrorResponse> handleMaxUpload(MaxUploadSizeExceededException ex) {
-        return construir(HttpStatus.BAD_REQUEST, "BAD REQUEST", "El archivo supera el tamaño máximo permitido");
+        return construir(HttpStatus.PAYLOAD_TOO_LARGE, "PAYLOAD TOO LARGE", "El archivo supera el tamaño máximo permitido (10 MB)");
+    }
+
+    /**
+     * Servicio externo no disponible (p. ej. el correo del OTP): HTTP 503.
+     *
+     * @param ex excepción de negocio.
+     * @return respuesta HTTP 503.
+     */
+    @ExceptionHandler(ServiceUnavailableException.class)
+    public ResponseEntity<ErrorResponse> handleUnavailable(ServiceUnavailableException ex) {
+        return construir(HttpStatus.SERVICE_UNAVAILABLE, "SERVICE UNAVAILABLE", ex.getMessage());
+    }
+
+    /**
+     * Demasiados intentos (bloqueo temporal de login): HTTP 429.
+     *
+     * @param ex excepción de negocio.
+     * @return respuesta HTTP 429.
+     */
+    @ExceptionHandler(TooManyRequestsException.class)
+    public ResponseEntity<ErrorResponse> handleTooMany(TooManyRequestsException ex) {
+        return construir(HttpStatus.TOO_MANY_REQUESTS, "TOO MANY REQUESTS", ex.getMessage());
     }
 
     private ResponseEntity<ErrorResponse> construir(HttpStatus status, String error, String mensaje) {

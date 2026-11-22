@@ -129,8 +129,10 @@ public class CitaServiceImpl implements CitaService {
         cita.setEstado(estadoInicial(rq.getEstado()));
         cita.setMotivo(rq.getMotivo());
         cita.setEspecializacionId(medico.getEspecializacionId().longValue());
-        citaRepository.save(cita);
-        return ok("Cita médica registrada exitosamente.");
+        cita = citaRepository.save(cita);
+        MiRespuestaRS respuesta = ok("Cita médica registrada exitosamente.");
+        respuesta.setId(cita.getId());
+        return respuesta;
     }
 
     /** {@inheritDoc} */
@@ -229,6 +231,10 @@ public class CitaServiceImpl implements CitaService {
         Cita cita = cargar(citaId);
         if (!List.of(CitaEstados.PENDIENTE, CitaEstados.CONFIRMADA).contains(cita.getEstado())) {
             throw new BadRequestException("Solo se puede atender una cita PENDIENTE o CONFIRMADA.");
+        }
+        if (cita.getFechaHora().toLocalDate().isAfter(java.time.LocalDate.now())) {
+            throw new BadRequestException("No se puede atender una cita programada para una fecha futura ("
+                    + cita.getFechaHora().toLocalDate() + ").");
         }
         cita.setEstado(CitaEstados.ATENDIDA);
         citaRepository.save(cita);

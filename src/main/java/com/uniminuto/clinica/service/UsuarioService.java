@@ -2,6 +2,8 @@ package com.uniminuto.clinica.service;
 
 import com.uniminuto.clinica.entity.Usuario;
 
+import com.uniminuto.clinica.models.UsuarioRq;
+
 import java.util.List;
 
 /**
@@ -15,4 +17,13 @@ public interface UsuarioService {
      * @return lista completa.
      */
     List<Usuario> obtenerUsuarios();
+
+    /** Crea un usuario con contraseña cifrada (BCrypt). */
+    Usuario guardarUsuario(UsuarioRq rq);
+
+    /** Actualiza correo, rol y (opcionalmente) contraseña. */
+    Usuario actualizarUsuario(UsuarioRq rq);
+
+    /** Activa o inactiva un usuario (un administrador no puede inactivarse a sí mismo). */
+    Usuario cambiarEstado(Long id, boolean activo);
 }

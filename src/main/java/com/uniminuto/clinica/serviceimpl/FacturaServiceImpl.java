@@ -63,9 +63,11 @@ public class FacturaServiceImpl implements FacturaService {
                         + "). Espere el despacho antes de facturar o solicite su cancelación autorizada");
             }
         }
-        AtencionMedica atencion = atencionRepository.findByCitaId(cita.getId()).orElse(null);
+        AtencionMedica atencion = atencionRepository.findByCitaId(cita.getId())
+                .orElseThrow(() -> new BadRequestException(
+                        "La cita no tiene una atención médica registrada: el veterinario debe abrir y finalizar la atención antes de facturar"));
         Tarifa tarifa = null;
-        if (atencion != null && atencion.getTarifaId() != null) {
+        if (atencion.getTarifaId() != null) {
             tarifa = tarifaRepository.findById(atencion.getTarifaId()).orElse(null);
         }
         if (tarifa == null) {
@@ -87,7 +89,7 @@ public class FacturaServiceImpl implements FacturaService {
         }
         Factura f = new Factura();
         f.setCitaId(cita.getId());
-        f.setAtencionId(atencion == null ? null : atencion.getId());
+        f.setAtencionId(atencion.getId());
         f.setClienteId(cita.getCliente().getClienteId());
         f.setMascotaId(cita.getMascota().getMascotaId());
         f.setMedicoId(cita.getMedico().getId());

@@ -21,6 +21,9 @@ public interface CitaRepository extends JpaRepository<Cita, Long> {
      */
     List<Cita> findAllByOrderByFechaHoraDesc();
 
+    /** ¿El médico tiene citas en esos estados posteriores a la fecha dada? */
+    boolean existsByMedico_IdAndEstadoInAndFechaHoraAfter(Long medicoId, java.util.Collection<String> estados, LocalDateTime desde);
+
     /**
      * Busca las citas cuya fecha y hora se encuentren dentro del rango indicado,
      * ordenadas de la más reciente a la más antigua.

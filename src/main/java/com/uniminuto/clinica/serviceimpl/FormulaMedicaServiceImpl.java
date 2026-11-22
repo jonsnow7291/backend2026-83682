@@ -40,6 +40,16 @@ import java.util.Map;
 @Service
 public class FormulaMedicaServiceImpl implements FormulaMedicaService {
 
+    /** Duración máxima de un tratamiento (días). */
+    private static final int MAX_DURACION_DIAS = 365;
+    /** Máximo de unidades por toma. */
+    private static final int MAX_UNIDADES_POR_DOSIS = 100;
+    /** Máximo de tomas por día. */
+    private static final int MAX_DOSIS_POR_DIA = 24;
+    /** Máximo de unidades totales por línea de fórmula. */
+    private static final int MAX_CANTIDAD_TOTAL = 10000;
+
+
     @Autowired private FormulaMedicaRepository formulaRepository;
     @Autowired private CitaRepository citaRepository;
     @Autowired private MedicamentoRepository medicamentoRepository;
@@ -185,17 +195,31 @@ public class FormulaMedicaServiceImpl implements FormulaMedicaService {
             if (d.getDuracionDias() == null || d.getDuracionDias() <= 0) {
                 throw new BadRequestException("La duración debe ser mayor que cero para " + m.getNombre());
             }
+            if (d.getDuracionDias() > MAX_DURACION_DIAS) {
+                throw new BadRequestException("La duración no puede superar " + MAX_DURACION_DIAS + " días para " + m.getNombre());
+            }
+            if (d.getViaAdministracion() == null || d.getViaAdministracion().isBlank()) {
+                throw new BadRequestException("La vía de administración es obligatoria para " + m.getNombre());
+            }
             Integer cantidad = d.getCantidadPrescrita();
             if (d.getUnidadesPorDosis() != null || d.getDosisPorDia() != null) {
                 if (d.getUnidadesPorDosis() == null || d.getUnidadesPorDosis() <= 0
                         || d.getDosisPorDia() == null || d.getDosisPorDia() <= 0) {
                     throw new BadRequestException("Unidades por dosis y dosis por día deben ser mayores que cero para " + m.getNombre());
                 }
+                if (d.getUnidadesPorDosis() > MAX_UNIDADES_POR_DOSIS || d.getDosisPorDia() > MAX_DOSIS_POR_DIA) {
+                    throw new BadRequestException("Unidades por dosis (máx. " + MAX_UNIDADES_POR_DOSIS + ") o dosis por día (máx. "
+                            + MAX_DOSIS_POR_DIA + ") exceden lo permitido para " + m.getNombre());
+                }
                 // Cantidad total requerida según la formulación (requerimiento 1.3).
                 cantidad = d.getUnidadesPorDosis() * d.getDosisPorDia() * d.getDuracionDias();
             }
             if (cantidad == null || cantidad <= 0) {
                 throw new BadRequestException("La cantidad prescrita debe ser mayor que cero para " + m.getNombre());
+            }
+            if (cantidad > MAX_CANTIDAD_TOTAL) {
+                throw new BadRequestException("La cantidad total (" + cantidad + ") supera el máximo permitido de "
+                        + MAX_CANTIDAD_TOTAL + " unidades para " + m.getNombre());
             }
             FormulaMedicaDetalle fd = new FormulaMedicaDetalle();
             fd.setMedicamento(m);

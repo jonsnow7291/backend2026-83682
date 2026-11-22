@@ -24,4 +24,7 @@ public interface TarifaRepository extends JpaRepository<Tarifa, Long> {
 
     /** @param especializacionId especialidad. @return tarifas activas de la especialidad. */
     List<Tarifa> findAllByEspecializacionIdAndActivaTrueOrderByIdAsc(Long especializacionId);
+
+    /** Tarifas de una especialidad con el mismo nombre de servicio (sin distinguir mayúsculas). */
+    List<Tarifa> findAllByEspecializacionIdAndServicioIgnoreCase(Long especializacionId, String servicio);
 }

@@ -4,6 +4,7 @@ import com.uniminuto.clinica.api.MedicoApi;
 import com.uniminuto.clinica.entity.Medico;
 import com.uniminuto.clinica.exception.BadRequestException;
 import com.uniminuto.clinica.service.MedicoService;
+import com.uniminuto.clinica.models.MedicoRq;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.RestController;
@@ -33,6 +34,16 @@ public class MedicoApiController implements MedicoApi {
     /**
      * {@inheritDoc}
      */
+    @Override
+    public ResponseEntity<Medico> guardarMedico(MedicoRq rq) {
+        return ResponseEntity.ok(medicoService.guardarMedico(rq));
+    }
+
+    @Override
+    public ResponseEntity<Medico> actualizarMedico(MedicoRq rq) {
+        return ResponseEntity.ok(medicoService.actualizarMedico(rq));
+    }
+
     @Override
     public ResponseEntity<Medico> cambiarEstado(Long id, boolean activo) {
         return ResponseEntity.ok(medicoService.cambiarEstado(id, activo));

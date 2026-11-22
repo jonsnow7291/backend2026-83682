@@ -145,6 +145,7 @@ class ReglasAlineacionEnunciadoTest {
         d.setUnidadesPorDosis(unidades);
         d.setDosisPorDia(tomas);
         d.setCantidadPrescrita(cantidad);
+        d.setViaAdministracion("oral");
         return d;
     }
 
@@ -172,6 +173,9 @@ class ReglasAlineacionEnunciadoTest {
     private void prepararFacturaDeCitaAtendida() {
         Cita c = citaAtendida();
         when(citaRepository.bloquear(7L)).thenReturn(Optional.of(c));
+        com.uniminuto.clinica.entity.AtencionMedica atencion = new com.uniminuto.clinica.entity.AtencionMedica();
+        atencion.setId(11L);
+        when(atencionRepository.findByCitaId(7L)).thenReturn(Optional.of(atencion));
         Tarifa t = new Tarifa();
         t.setId(1L);
         when(tarifaRepository.findAllByEspecializacionIdAndActivaTrueOrderByIdAsc(1L)).thenReturn(List.of(t));
@@ -222,5 +226,33 @@ class ReglasAlineacionEnunciadoTest {
         Especializacion creada = especialidades.guardar(rq);
         assertEquals("DER", creada.getCodigoEspecializacion());
         assertTrue(creada.getActiva(), "una especialidad nueva nace activa");
+    }
+
+    @Test
+    void noSeFacturaUnaCitaSinAtencionMedica() {
+        Cita c = citaAtendida();
+        when(citaRepository.bloquear(7L)).thenReturn(Optional.of(c));
+        when(atencionRepository.findByCitaId(7L)).thenReturn(Optional.empty());
+        assertThrows(BadRequestException.class, () -> facturas.generar(new FacturaDtos.GenerarRq(7L, null)),
+                "una cita marcada como atendida sin atención registrada no puede facturarse");
+    }
+
+    @Test
+    void laFormulaRechazaDuracionesYCantidadesDesmedidas() {
+        when(citaRepository.findById(7L)).thenReturn(Optional.of(citaAtendida()));
+        when(medicamentoRepository.findById(1L)).thenReturn(Optional.of(medicamento("MEDICAMENTO")));
+        FormulaMedicaRq rq = new FormulaMedicaRq();
+        rq.setCitaId(7L);
+        FormulaMedicaRq.Detalle largo = detalle(1, 1, 1);
+        largo.setDuracionDias(99999);
+        rq.setDetalles(List.of(largo));
+        assertThrows(BadRequestException.class, () -> formulas.guardarFormulaMedica(rq));
+        FormulaMedicaRq.Detalle enorme = detalle(1000000, 1, 1);
+        rq.setDetalles(List.of(enorme));
+        assertThrows(BadRequestException.class, () -> formulas.guardarFormulaMedica(rq));
+        FormulaMedicaRq.Detalle sinVia = detalle(1, 1, 1);
+        sinVia.setViaAdministracion(" ");
+        rq.setDetalles(List.of(sinVia));
+        assertThrows(BadRequestException.class, () -> formulas.guardarFormulaMedica(rq));
     }
 }
