@@ -40,5 +40,16 @@ services:
     ports:
       - "${BACKEND_PORT:-8080}:8080"
 
+  frontend:
+    # Por defecto se construye desde el repositorio del frontend en GitHub (basta clonar solo este repo).
+    # Con los dos repos clonados lado a lado:  FRONTEND_CONTEXT=../frontend26-83682 docker compose up --build
+    build: "${FRONTEND_CONTEXT:-https://github.com/jonsnow7291/frontend26-83682.git#1016004-JDCHAPARRO}"
+    container_name: clinica-frontend
+    restart: unless-stopped
+    depends_on:
+      - backend
+    ports:
+      - "${FRONTEND_PORT:-4200}:80"
+
 volumes:
   clinica-data:

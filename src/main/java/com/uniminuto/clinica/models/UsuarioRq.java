@@ -14,4 +14,6 @@ public class UsuarioRq {
     private String password;
     private String email;
     private String rol;
+    /** Datos profesionales; obligatorios cuando el rol es MEDICO (se crean/actualizan junto con el usuario). */
+    private MedicoRq medico;
 }
