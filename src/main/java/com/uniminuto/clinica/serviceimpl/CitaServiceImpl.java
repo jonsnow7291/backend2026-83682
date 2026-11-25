@@ -2,7 +2,6 @@ package com.uniminuto.clinica.serviceimpl;
 
 import com.uniminuto.clinica.entity.Cita;
 import com.uniminuto.clinica.entity.Cliente;
-import com.uniminuto.clinica.entity.HorarioVeterinario;
 import com.uniminuto.clinica.entity.Mascota;
 import com.uniminuto.clinica.entity.Medico;
 import com.uniminuto.clinica.exception.BadRequestException;
@@ -14,7 +13,6 @@ import com.uniminuto.clinica.models.MiRespuestaRS;
 import com.uniminuto.clinica.models.ReprogramarRq;
 import com.uniminuto.clinica.repository.CitaRepository;
 import com.uniminuto.clinica.repository.ClienteRepository;
-import com.uniminuto.clinica.repository.HorarioRepository;
 import com.uniminuto.clinica.repository.MascotaRepository;
 import com.uniminuto.clinica.repository.MedicoRepository;
 import com.uniminuto.clinica.security.Roles;
@@ -28,7 +26,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
-import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -37,8 +34,8 @@ import java.util.Map;
 /**
  * Implementación de la agenda de citas. Reglas de negocio (RN) validadas aquí:
  * RN1 el veterinario no tiene citas solapadas; RN2 la mascota no tiene citas simultáneas;
- * RN3 no se asignan citas a médicos inactivos; RN4 la cita debe caer dentro del horario del
- * veterinario; RN5 las canceladas conservan historial; RN6 la mascota pertenece al propietario;
+ * RN3 no se asignan citas a médicos inactivos; RN4 (horario del veterinario) se retiró: se puede
+ * agendar a cualquier hora; RN5 las canceladas conservan historial; RN6 la mascota pertenece al propietario;
  * RN7 un MEDICO solo ve y gestiona sus citas.
  */
 @Service
@@ -57,9 +54,6 @@ public class CitaServiceImpl implements CitaService {
 
     @Autowired
     private MedicoRepository medicoRepository;
-
-    @Autowired
-    private HorarioRepository horarioRepository;
 
     @Autowired
     private UsuarioActual usuarioActual;
@@ -115,8 +109,9 @@ public class CitaServiceImpl implements CitaService {
         Mascota mascota = obtenerMascota(rq.getMascotaId());
         Medico medico = obtenerMedico(rq.getMedicoId());
         usuarioActualExigirMedico(medico.getId());
-        if (rq.getFechaHora().isBefore(LocalDateTime.now())) {
-            throw new BadRequestException("No se pueden registrar citas en fechas u horas anteriores a la actual.");
+        // Se admite cualquier hora del día de hoy (el médico puede registrar y atender hasta la última hora de hoy)
+        if (rq.getFechaHora().toLocalDate().isBefore(java.time.LocalDate.now())) {
+            throw new BadRequestException("No se pueden registrar citas en fechas anteriores a hoy.");
         }
         LocalDateTime fin = rq.getFechaHora().plusMinutes(duracion(rq.getDuracionMinutos(), DURACION_DEFECTO));
         validarReglas(cliente, mascota, medico, rq.getFechaHora(), fin, null);
@@ -200,8 +195,8 @@ public class CitaServiceImpl implements CitaService {
         }
         Cita cita = cargar(rq.getCitaId());
         exigirEditable(cita);
-        if (rq.getFechaHora().isBefore(LocalDateTime.now())) {
-            throw new BadRequestException("No se puede reprogramar a una fecha u hora pasada.");
+        if (rq.getFechaHora().toLocalDate().isBefore(java.time.LocalDate.now())) {
+            throw new BadRequestException("No se puede reprogramar a una fecha anterior a hoy.");
         }
         LocalDateTime fin = rq.getFechaHora().plusMinutes(duracion(rq.getDuracionMinutos(), minutos(cita)));
         validarReglas(cita.getCliente(), cita.getMascota(), cita.getMedico(), rq.getFechaHora(), fin, cita.getId());
@@ -398,7 +393,7 @@ public class CitaServiceImpl implements CitaService {
         }
     }
 
-    /** Aplica RN1 a RN4 y RN6. */
+    /** Aplica RN1 a RN3 y RN6 (sin restricción de horario del veterinario). */
     private void validarReglas(Cliente cliente, Mascota mascota, Medico medico,
                                LocalDateTime inicio, LocalDateTime fin, Long excluir) {
         if (mascota.getCliente() == null || !mascota.getCliente().getClienteId().equals(cliente.getClienteId())) {
@@ -408,9 +403,6 @@ public class CitaServiceImpl implements CitaService {
         if (!Boolean.TRUE.equals(medico.getActivo())) {
             throw new BadRequestException("El médico veterinario está inactivo y no puede recibir citas.");
         }
-        if (!inicio.toLocalDate().equals(fin.toLocalDate()) || !dentroDeHorario(medico.getId(), inicio, fin)) {
-            throw new BadRequestException("La cita está fuera del horario de disponibilidad del veterinario.");
-        }
         long ex = excluir == null ? -1L : excluir;
         if (!citaRepository.solapadasMedico(medico.getId(), inicio, fin, ex).isEmpty()) {
             throw new ConflictException("El médico veterinario ya tiene una cita que se solapa con ese horario.");
@@ -418,18 +410,6 @@ public class CitaServiceImpl implements CitaService {
         if (!citaRepository.solapadasMascota(mascota.getMascotaId(), inicio, fin, ex).isEmpty()) {
             throw new ConflictException("La mascota ya tiene otra cita activa en un horario que se solapa.");
         }
-    }
-
-    private boolean dentroDeHorario(Long medicoId, LocalDateTime inicio, LocalDateTime fin) {
-        int dia = inicio.getDayOfWeek().getValue();
-        LocalTime hi = inicio.toLocalTime();
-        LocalTime hf = fin.toLocalTime();
-        for (HorarioVeterinario h : horarioRepository.findAllByMedicoIdAndDiaSemanaAndActivoTrue(medicoId, dia)) {
-            if (!hi.isBefore(h.getHoraInicio()) && !hf.isAfter(h.getHoraFin())) {
-                return true;
-            }
-        }
-        return false;
     }
 
     private Cliente obtenerCliente(Long id) {

@@ -71,7 +71,7 @@ public interface CitaApi {
      * @throws BadRequestException si falla una validación.
      */
     @Operation(summary = "Registrar cita",
-            description = "Valida: sin solapamiento del veterinario ni de la mascota (409), médico activo, dentro del horario del veterinario y mascota del propietario.")
+            description = "Valida: sin solapamiento del veterinario ni de la mascota (409), médico activo y mascota del propietario. No se restringe por horario del veterinario.")
     @ApiResponse(responseCode = "409", description = "Solapamiento con otra cita")
     @PostMapping(value = "/guardar", produces = {"application/json"}, consumes = {"application/json"})
     ResponseEntity<MiRespuestaRS> guardarCita(@RequestBody CitaRq citaRq) throws BadRequestException;
