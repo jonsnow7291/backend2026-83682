@@ -14,7 +14,9 @@ import com.uniminuto.clinica.security.Roles;
 import com.uniminuto.clinica.service.MedicoService;
 import com.uniminuto.clinica.util.CitaEstados;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -44,6 +46,9 @@ public class MedicoServiceImpl implements MedicoService {
     @Autowired
     private CitaRepository citaRepository;
 
+    @Autowired
+    private PasswordEncoder passwordEncoder;
+
     @Override
     public List<Medico> obtenerMedicos() {
         return medicoRepository.findAll();
@@ -63,11 +68,31 @@ public class MedicoServiceImpl implements MedicoService {
     }
 
     @Override
+    @Transactional
     public Medico guardarMedico(MedicoRq rq) {
         validar(rq, null);
         Medico m = new Medico();
         aplicar(m, rq);
         m.setActivo(true);
+
+        // Si no se indica un usuario, se crea automáticamente una cuenta de acceso
+        // con rol MEDICO para que el veterinario pueda iniciar sesión y gestionar sus citas.
+        if (rq.getUsuarioId() == null) {
+            String username = rq.getNumeroDocumento().trim();
+            if (usuarioRepository.findByUsername(username).isPresent()) {
+                throw new ConflictException("Ya existe un usuario con el documento " + username);
+            }
+            Usuario u = new Usuario();
+            u.setUsername(username);
+            u.setEmail(username + "@clinica.local");
+            u.setRol(Roles.MEDICO);
+            u.setPasswordHash(passwordEncoder.encode("Medico123!"));
+            u.setFechaCreacion(LocalDateTime.now());
+            u.setActivo(true);
+            u = usuarioRepository.save(u);
+            m.setUsuarioId(u.getId());
+        }
+
         return medicoRepository.save(m);
     }
 
