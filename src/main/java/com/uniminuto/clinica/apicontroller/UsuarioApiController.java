@@ -3,8 +3,9 @@ package com.uniminuto.clinica.apicontroller;
 import com.uniminuto.clinica.api.UsuarioApi;
 import com.uniminuto.clinica.entity.Usuario;
 import com.uniminuto.clinica.exception.BadRequestException;
-import com.uniminuto.clinica.service.UsuarioService;
+import com.uniminuto.clinica.models.MiRespuestaRS;
 import com.uniminuto.clinica.models.UsuarioRq;
+import com.uniminuto.clinica.service.UsuarioService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.RestController;
@@ -44,5 +45,17 @@ public class UsuarioApiController implements UsuarioApi {
     @Override
     public ResponseEntity<Usuario> cambiarEstado(Long id, boolean activo) {
         return ResponseEntity.ok(this.usuarioService.cambiarEstado(id, activo));
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public ResponseEntity<MiRespuestaRS> eliminarUsuario(Long id) throws BadRequestException {
+        this.usuarioService.eliminarUsuario(id);
+        MiRespuestaRS r = new MiRespuestaRS();
+        r.setStatus(200);
+        r.setMessage("Usuario eliminado exitosamente");
+        return ResponseEntity.ok(r);
     }
 }

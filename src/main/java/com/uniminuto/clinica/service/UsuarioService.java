@@ -26,4 +26,7 @@ public interface UsuarioService {
 
     /** Activa o inactiva un usuario (un administrador no puede inactivarse a sí mismo). */
     Usuario cambiarEstado(Long id, boolean activo);
+
+    /** Elimina un usuario (y su médico asociado si existe). Solo ADMIN. */
+    void eliminarUsuario(Long id);
 }

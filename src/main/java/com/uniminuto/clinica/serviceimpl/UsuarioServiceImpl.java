@@ -142,6 +142,24 @@ public class UsuarioServiceImpl implements UsuarioService {
         return usuarioRepository.save(u);
     }
 
+    @Override
+    @Transactional
+    public void eliminarUsuario(Long id) {
+        if (id == null || id <= 0) {
+            throw new BadRequestException("El id de usuario es obligatorio");
+        }
+        if (id.equals(usuarioActual.id())) {
+            throw new ConflictException("No puede eliminar su propio usuario");
+        }
+        Usuario u = usuarioRepository.findById(id)
+                .orElseThrow(() -> new NotFoundException("El usuario " + id + " no existe"));
+
+        // Eliminar el médico asociado si existe (para no dejar huérfanos).
+        medicoRepository.findByUsuarioId(id).ifPresent(m -> medicoRepository.delete(m));
+
+        usuarioRepository.delete(u);
+    }
+
     private MedicoRq datosMedico(UsuarioRq rq, Long usuarioId) {
         if (rq.getMedico() == null) {
             throw new BadRequestException("Los datos profesionales del médico son obligatorios para el rol MEDICO");

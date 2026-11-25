@@ -104,7 +104,8 @@ public class SecurityConfig {
                         .requestMatchers("/factura/**", "/pago/**").hasAnyRole(Roles.ADMIN, Roles.SECRETARIA)
                         // Sesión propia: cualquier usuario autenticado
                         .requestMatchers("/auth/me").authenticated()
-                        // Administración
+                        // Administración (incluye eliminar usuario)
+                        .requestMatchers(HttpMethod.DELETE, "/usuario/**").hasRole(Roles.ADMIN)
                         .requestMatchers("/usuario/**", "/reportes/**").hasRole(Roles.ADMIN)
                         // Resto del sistema clínico: todo perfil excepto DESPACHO_MEDICO
                         .anyRequest().hasAnyRole(Roles.ADMIN, Roles.SECRETARIA, Roles.MEDICO))
