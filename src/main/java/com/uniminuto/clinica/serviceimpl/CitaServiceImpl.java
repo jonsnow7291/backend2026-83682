@@ -400,6 +400,9 @@ public class CitaServiceImpl implements CitaService {
             throw new BadRequestException("La mascota '" + mascota.getNombreMascota() + "' no pertenece al cliente seleccionado ("
                     + cliente.getNombres() + " " + cliente.getApellidos() + ").");
         }
+        if (!Boolean.TRUE.equals(cliente.getActivo())) {
+            throw new BadRequestException("El cliente está inactivo y no puede crear ni programar citas.");
+        }
         if (!Boolean.TRUE.equals(medico.getActivo())) {
             throw new BadRequestException("El médico veterinario está inactivo y no puede recibir citas.");
         }
