@@ -6,6 +6,7 @@ import com.uniminuto.clinica.exception.BadRequestException;
 import com.uniminuto.clinica.exception.ConflictException;
 import com.uniminuto.clinica.exception.NotFoundException;
 import com.uniminuto.clinica.models.MedicoRq;
+import com.uniminuto.clinica.models.MiRespuestaRS;
 import com.uniminuto.clinica.repository.CitaRepository;
 import com.uniminuto.clinica.repository.EspecializacionRepository;
 import com.uniminuto.clinica.repository.MedicoRepository;
@@ -173,5 +174,38 @@ public class MedicoServiceImpl implements MedicoService {
         m.setRegistroProfesional(rq.getRegistroProfesional().trim());
         m.setEspecializacionId(rq.getEspecializacionId());
         m.setUsuarioId(rq.getUsuarioId());
+    }
+
+    @Override
+    @Transactional
+    public MiRespuestaRS crearAccesoUsuario(Long id) throws BadRequestException {
+        if (id == null || id <= 0) {
+            throw new BadRequestException("El id del médico es obligatorio");
+        }
+        Medico m = medicoRepository.findById(id)
+                .orElseThrow(() -> new NotFoundException("El médico " + id + " no existe"));
+        if (m.getUsuarioId() != null) {
+            throw new ConflictException("El médico ya tiene una cuenta de acceso asociada");
+        }
+        String username = m.getNumeroDocumento().trim();
+        if (usuarioRepository.findByUsername(username).isPresent()) {
+            throw new ConflictException("Ya existe un usuario con el documento " + username);
+        }
+        Usuario u = new Usuario();
+        u.setUsername(username);
+        u.setEmail(username + "@clinica.local");
+        u.setRol(Roles.MEDICO);
+        u.setPasswordHash(passwordEncoder.encode("Medico123!"));
+        u.setFechaCreacion(LocalDateTime.now());
+        u.setActivo(true);
+        u = usuarioRepository.save(u);
+        m.setUsuarioId(u.getId());
+        medicoRepository.save(m);
+
+        MiRespuestaRS respuesta = new MiRespuestaRS();
+        respuesta.setStatus(200);
+        respuesta.setMessage("Acceso de usuario creado para el médico " + m.getNombres() + " " + m.getApellidos()
+                + ". Usuario: " + username + ", contraseña temporal: Medico123!");
+        return respuesta;
     }
 }

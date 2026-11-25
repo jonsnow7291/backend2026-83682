@@ -5,11 +5,13 @@ import com.uniminuto.clinica.exception.BadRequestException;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import com.uniminuto.clinica.models.MedicoRq;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 
 import java.util.List;
 
@@ -50,4 +52,11 @@ public interface MedicoApi {
     @org.springframework.web.bind.annotation.PatchMapping(value = "/estado", produces = {"application/json"})
     ResponseEntity<Medico> cambiarEstado(@org.springframework.web.bind.annotation.RequestParam Long id,
                                         @org.springframework.web.bind.annotation.RequestParam boolean activo);
+
+    /** Crea una cuenta de acceso (rol MEDICO) vinculada a un médico existente que no tenga usuario. */
+    @io.swagger.v3.oas.annotations.Operation(summary = "Crear acceso de usuario para médico")
+    @PostMapping(value = "/crear-acceso", produces = {"application/json"})
+    ResponseEntity<com.uniminuto.clinica.models.MiRespuestaRS> crearAccesoUsuario(
+            @RequestParam Long id)
+            throws BadRequestException;
 }

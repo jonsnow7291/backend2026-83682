@@ -1,6 +1,8 @@
 package com.uniminuto.clinica.service;
 
 import com.uniminuto.clinica.entity.Medico;
+import com.uniminuto.clinica.exception.BadRequestException;
+import com.uniminuto.clinica.models.MiRespuestaRS;
 
 import com.uniminuto.clinica.models.MedicoRq;
 
@@ -32,4 +34,7 @@ public interface MedicoService {
 
     /** Actualiza un médico existente. */
     Medico actualizarMedico(MedicoRq rq);
+
+    /** Crea una cuenta de acceso (rol MEDICO) vinculada a un médico existente sin usuario. */
+    MiRespuestaRS crearAccesoUsuario(Long id) throws BadRequestException;
 }
