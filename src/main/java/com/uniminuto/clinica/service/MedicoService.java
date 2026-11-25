@@ -37,4 +37,7 @@ public interface MedicoService {
 
     /** Crea una cuenta de acceso (rol MEDICO) vinculada a un médico existente sin usuario. */
     MiRespuestaRS crearAccesoUsuario(Long id) throws BadRequestException;
+
+    /** Elimina un médico (y su usuario asociado si existe). Solo ADMIN. */
+    void eliminarMedico(Long id) throws BadRequestException;
 }

@@ -57,4 +57,16 @@ public class MedicoApiController implements MedicoApi {
     public ResponseEntity<MiRespuestaRS> crearAccesoUsuario(Long id) throws BadRequestException {
         return ResponseEntity.ok(medicoService.crearAccesoUsuario(id));
     }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public ResponseEntity<MiRespuestaRS> eliminarMedico(Long id) throws BadRequestException {
+        medicoService.eliminarMedico(id);
+        MiRespuestaRS r = new MiRespuestaRS();
+        r.setStatus(200);
+        r.setMessage("Médico eliminado exitosamente");
+        return ResponseEntity.ok(r);
+    }
 }

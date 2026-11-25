@@ -208,4 +208,21 @@ public class MedicoServiceImpl implements MedicoService {
                 + ". Usuario: " + username + ", contraseña temporal: Medico123!");
         return respuesta;
     }
+
+    @Override
+    @Transactional
+    public void eliminarMedico(Long id) throws BadRequestException {
+        if (id == null || id <= 0) {
+            throw new BadRequestException("El id del médico es obligatorio");
+        }
+        Medico m = medicoRepository.findById(id)
+                .orElseThrow(() -> new NotFoundException("El médico " + id + " no existe"));
+
+        // Si tiene usuario asociado, eliminarlo también para no dejar huérfanos.
+        if (m.getUsuarioId() != null) {
+            usuarioRepository.deleteById(m.getUsuarioId());
+        }
+
+        medicoRepository.delete(m);
+    }
 }

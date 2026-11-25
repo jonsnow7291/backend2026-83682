@@ -59,4 +59,11 @@ public interface MedicoApi {
     ResponseEntity<com.uniminuto.clinica.models.MiRespuestaRS> crearAccesoUsuario(
             @RequestParam Long id)
             throws BadRequestException;
+
+    /** Elimina un médico (y su usuario asociado si existe). Solo ADMIN. */
+    @io.swagger.v3.oas.annotations.Operation(summary = "Eliminar médico")
+    @DeleteMapping(value = "/eliminar", produces = {"application/json"})
+    ResponseEntity<com.uniminuto.clinica.models.MiRespuestaRS> eliminarMedico(
+            @RequestParam Long id)
+            throws BadRequestException;
 }
