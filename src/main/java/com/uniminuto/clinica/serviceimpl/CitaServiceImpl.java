@@ -74,7 +74,8 @@ public class CitaServiceImpl implements CitaService {
             citas = citaRepository.findAllByFechaHoraBetweenOrderByFechaHoraDesc(fechaInicial, fechaFinal);
         }
         Long propio = medicoRestringido();
-        return propio == null ? citas : citas.stream().filter(c -> c.getMedico().getId().equals(propio)).toList();
+        List<Cita> resultado = propio == null ? citas : citas.stream().filter(c -> c.getMedico().getId().equals(propio)).toList();
+        return resultado.stream().filter(this::estaDisponible).toList();
     }
 
     /** {@inheritDoc} */
@@ -86,6 +87,9 @@ public class CitaServiceImpl implements CitaService {
         Cita c = citaRepository.findById(citaId)
                 .orElseThrow(() -> new NotFoundException("La cita médica con id " + citaId + " no existe."));
         usuarioActualExigirPropia(c);
+        if (!estaDisponible(c)) {
+            throw new BadRequestException("La cita no está disponible porque cliente o médico están inactivos");
+        }
         return c;
     }
 
@@ -97,7 +101,7 @@ public class CitaServiceImpl implements CitaService {
         }
         obtenerMascota(mascotaId);
         return citaRepository.findAllByMascota_MascotaIdOrderByFechaHoraDesc(mascotaId).stream()
-                .filter(c -> CitaEstados.fueAtendida(c.getEstado())).toList();
+                .filter(c -> CitaEstados.fueAtendida(c.getEstado()) && estaDisponible(c)).toList();
     }
 
     /** {@inheritDoc} */
@@ -239,14 +243,16 @@ public class CitaServiceImpl implements CitaService {
     /** {@inheritDoc} */
     @Override
     public List<CitaCalendarioRs> calendario(Long medicoId, LocalDateTime desde, LocalDateTime hasta) {
-        return citasEnRango(medicoId, desde, hasta).stream().map(c -> new CitaCalendarioRs(
-                c.getId(),
-                c.getMascota().getNombreMascota() + " - " + c.getCliente().getNombres() + " " + c.getCliente().getApellidos(),
-                c.getFechaHora(), c.getFechaHoraFin(), c.getEstado(),
-                c.getMascota().getNombreMascota(),
-                c.getCliente().getNombres() + " " + c.getCliente().getApellidos(),
-                c.getMotivo(), c.getMedico().getId(),
-                c.getMedico().getNombres() + " " + c.getMedico().getApellidos())).toList();
+        return citasEnRango(medicoId, desde, hasta).stream()
+                .filter(this::estaDisponible)
+                .map(c -> new CitaCalendarioRs(
+                    c.getId(),
+                    c.getMascota().getNombreMascota() + " - " + c.getCliente().getNombres() + " " + c.getCliente().getApellidos(),
+                    c.getFechaHora(), c.getFechaHoraFin(), c.getEstado(),
+                    c.getMascota().getNombreMascota(),
+                    c.getCliente().getNombres() + " " + c.getCliente().getApellidos(),
+                    c.getMotivo(), c.getMedico().getId(),
+                    c.getMedico().getNombres() + " " + c.getMedico().getApellidos())).toList();
     }
 
     /** {@inheritDoc} */
@@ -255,7 +261,9 @@ public class CitaServiceImpl implements CitaService {
         obtenerMascota(mascotaId);
         Long propio = medicoRestringido();
         return citaRepository.findAllByMascota_MascotaIdOrderByFechaHoraDesc(mascotaId).stream()
-                .filter(c -> propio == null || c.getMedico().getId().equals(propio)).toList();
+                .filter(c -> propio == null || c.getMedico().getId().equals(propio))
+                .filter(this::estaDisponible)
+                .toList();
     }
 
     /** {@inheritDoc} */
@@ -289,7 +297,7 @@ public class CitaServiceImpl implements CitaService {
 
     // ------------------------------------------------------------------ utilidades
 
-    /** Citas del rango respetando que un MEDICO solo ve las suyas. */
+    /** Citas del rango respetando que un MEDICO solo ve las suyas. Filtera usuarios inactivos. */
     private List<Cita> citasEnRango(Long medicoId, LocalDateTime desde, LocalDateTime hasta) {
         if (desde == null || hasta == null) {
             throw new BadRequestException("Los parámetros desde y hasta son obligatorios");
@@ -302,7 +310,18 @@ public class CitaServiceImpl implements CitaService {
         if (propio != null && medicoId != null && !medicoId.equals(propio)) {
             throw new AccessDeniedException("Un médico solo consulta sus propias citas");
         }
-        return citaRepository.enRango(filtro, desde, hasta);
+        return citaRepository.enRango(filtro, desde, hasta).stream().filter(this::estaDisponible).toList();
+    }
+
+    /**
+     * True si la cita debe aparecer en registros: el cliente y el médico asociados
+     * están activos en el sistema.
+     */
+    private boolean estaDisponible(Cita c) {
+        if (c.getCliente() == null || c.getMedico() == null) {
+            return false;
+        }
+        return Boolean.TRUE.equals(c.getCliente().getActivo()) && Boolean.TRUE.equals(c.getMedico().getActivo());
     }
 
     /** @return id del médico si el usuario actual es MEDICO; {@code null} si no aplica restricción. */
